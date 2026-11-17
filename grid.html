@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b17">
+<title>Grid Menu</title>
+<style>
+  :root{
+    --bg:#0b0b17;
+    --bg2:#12122a;
+    --card:rgba(255,255,255,.06);
+    --card-hover:rgba(255,255,255,.11);
+    --border:rgba(255,255,255,.10);
+    --text:#f3f4ff;
+    --muted:#9a9cc2;
+    --shadow:0 10px 40px rgba(0,0,0,.35);
+  }
+  :root[data-theme="light"]{
+    --bg:#f2f3ff;
+    --bg2:#e6e8ff;
+    --card:rgba(255,255,255,.75);
+    --card-hover:rgba(255,255,255,.95);
+    --border:rgba(60,60,140,.12);
+    --text:#17173a;
+    --muted:#60628f;
+    --shadow:0 10px 30px rgba(70,70,160,.15);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    overflow-x:hidden;
+    transition:background .4s,color .4s;
+  }
+
+  /* animated blobs */
+  .blobs{position:fixed;inset:0;z-index:-1;overflow:hidden;background:radial-gradient(circle at 20% 0%,var(--bg2),var(--bg) 60%)}
+  .blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.45;animation:float 18s ease-in-out infinite}
+  .b1{width:420px;height:420px;background:#7c3aed;top:-120px;left:-100px}
+  .b2{width:380px;height:380px;background:#06b6d4;bottom:-120px;right:-80px;animation-delay:-6s}
+  .b3{width:300px;height:300px;background:#ec4899;top:40%;left:55%;animation-delay:-12s;opacity:.3}
+  :root[data-theme="light"] .blob{opacity:.28}
+  @keyframes float{
+    0%,100%{transform:translate(0,0) scale(1)}
+    33%{transform:translate(50px,40px) scale(1.1)}
+    66%{transform:translate(-40px,60px) scale(.95)}
+  }
+
+  .wrap{max-width:1100px;margin:0 auto;padding:28px 18px 80px}
+
+  /* header */
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:26px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{
+    width:46px;height:46px;border-radius:15px;
+    background:linear-gradient(135deg,#7c3aed,#06b6d4);
+    display:grid;place-items:center;font-size:22px;
+    box-shadow:0 8px 24px rgba(124,58,237,.45);
+  }
+  .brand h1{font-size:1.25rem;font-weight:800;letter-spacing:-.02em}
+  .brand p{font-size:.78rem;color:var(--muted)}
+  .icon-btn{
+    width:44px;height:44px;border-radius:14px;border:1px solid var(--border);
+    background:var(--card);color:var(--text);font-size:19px;cursor:pointer;
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    transition:transform .2s,background .2s;
+  }
+  .icon-btn:hover{transform:scale(1.08);background:var(--card-hover)}
+
+  /* hero */
+  .hero{margin-bottom:22px}
+  .hero h2{
+    font-size:clamp(1.7rem,5vw,2.6rem);font-weight:800;letter-spacing:-.03em;line-height:1.15;
+  }
+  .grad{background:linear-gradient(90deg,#a78bfa,#22d3ee,#f472b6);-webkit-background-clip:text;background-clip:text;color:transparent;
+    background-size:200% auto;animation:shine 6s linear infinite}
+  @keyframes shine{to{background-position:200% center}}
+  .hero p{color:var(--muted);margin-top:8px;font-size:.95rem}
+  .clock{display:inline-flex;gap:8px;align-items:center;margin-top:12px;padding:6px 12px;border-radius:99px;
+    background:var(--card);border:1px solid var(--border);font-size:.78rem;color:var(--muted)}
+  .dot{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 0 rgba(34,197,94,.7);animation:pulse 2s infinite}
+  @keyframes pulse{70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+
+  /* search + filters */
+  .search{
+    position:relative;margin:20px 0 14px;
+  }
+  .search input{
+    width:100%;padding:16px 18px 16px 50px;border-radius:18px;border:1px solid var(--border);
+    background:var(--card);color:var(--text);font-size:1rem;outline:none;
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    transition:border .2s,box-shadow .2s;
+  }
+  .search input::placeholder{color:var(--muted)}
+  .search input:focus{border-color:#8b5cf6;box-shadow:0 0 0 4px rgba(139,92,246,.2)}
+  .search span{position:absolute;left:18px;top:50%;transform:translateY(-50%);font-size:18px;opacity:.7}
+
+  .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:22px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{
+    flex:none;padding:9px 16px;border-radius:99px;border:1px solid var(--border);
+    background:var(--card);color:var(--muted);font-size:.85rem;font-weight:600;cursor:pointer;
+    transition:all .2s;
+  }
+  .chip:hover{color:var(--text)}
+  .chip.active{background:linear-gradient(135deg,#7c3aed,#06b6d4);color:#fff;border-color:transparent;box-shadow:0 6px 18px rgba(124,58,237,.4)}
+
+  .section-title{
+    font-size:.78rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);
+    font-weight:700;margin:26px 4px 12px;
+  }
+
+  /* grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+  .card{
+    --c1:#7c3aed;--c2:#06b6d4;
+    position:relative;display:flex;flex-direction:column;gap:14px;
+    padding:20px;border-radius:24px;text-decoration:none;color:var(--text);
+    background:var(--card);border:1px solid var(--border);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    box-shadow:var(--shadow);overflow:hidden;
+    opacity:0;transform:translateY(18px);
+    animation:rise .55s cubic-bezier(.2,.8,.2,1) forwards;
+    transition:transform .3s cubic-bezier(.2,.8,.2,1),background .3s,border-color .3s;
+  }
+  @keyframes rise{to{opacity:1;transform:none}}
+  .card::before{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(400px circle at var(--mx,50%) var(--my,0%),color-mix(in srgb,var(--c1) 35%,transparent),transparent 45%);
+    opacity:0;transition:opacity .3s;pointer-events:none;
+  }
+  .card:hover{transform:translateY(-6px) scale(1.015);background:var(--card-hover);border-color:color-mix(in srgb,var(--c1) 60%,transparent)}
+  .card:hover::before{opacity:1}
+  .card:active{transform:scale(.97)}
+  .ico{
+    width:56px;height:56px;border-radius:18px;display:grid;place-items:center;font-size:28px;
+    background:linear-gradient(135deg,var(--c1),var(--c2));
+    box-shadow:0 10px 24px color-mix(in srgb,var(--c1) 50%,transparent);
+    transition:transform .35s;
+  }
+  .card:hover .ico{transform:rotate(-8deg) scale(1.1)}
+  .card h3{font-size:1.05rem;font-weight:700;letter-spacing:-.01em}
+  .card p{font-size:.84rem;color:var(--muted);line-height:1.45;margin-top:3px}
+  .foot{display:flex;align-items:center;justify-content:space-between;margin-top:auto}
+  .tag{font-size:.68rem;font-weight:700;padding:4px 10px;border-radius:99px;
+    background:color-mix(in srgb,var(--c1) 18%,transparent);color:var(--c1);letter-spacing:.03em}
+  :root:not([data-theme="light"]) .tag{color:color-mix(in srgb,var(--c1) 55%,#fff)}
+  .arrow{font-size:18px;opacity:.4;transition:transform .3s,opacity .3s}
+  .card:hover .arrow{transform:translateX(5px);opacity:1}
+  .fav{
+    position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:11px;border:none;
+    background:transparent;color:var(--muted);font-size:17px;cursor:pointer;z-index:2;
+    transition:transform .2s,color .2s,background .2s;
+  }
+  .fav:hover{background:var(--card-hover);transform:scale(1.15)}
+  .fav.on{color:#fbbf24}
+
+  .empty{display:none;text-align:center;padding:60px 20px;color:var(--muted)}
+  .empty b{display:block;font-size:2.4rem;margin-bottom:8px}
+
+  footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:44px}
+
+  /* toast */
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translate(-50%,40px);opacity:0;
+    padding:11px 18px;border-radius:14px;background:#17173a;color:#fff;font-size:.85rem;
+    box-shadow:0 10px 30px rgba(0,0,0,.4);transition:all .35s;z-index:50;pointer-events:none;
+  }
+  .toast.show{transform:translate(-50%,0);opacity:1}
+
+  @media (max-width:520px){
+    .grid{grid-template-columns:repeat(2,1fr);gap:12px}
+    .card{padding:16px;border-radius:20px;gap:10px}
+    .ico{width:48px;height:48px;font-size:24px;border-radius:15px}
+    .card h3{font-size:.95rem}
+    .card p{font-size:.76rem}
+  }
+  @media (max-width:360px){.grid{grid-template-columns:1fr}}
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="blobs"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">⚡</div>
+      <div>
+        <h1>Nut Notes: Asisten Chat WA</h1>
+        <p>Semua tools dalam satu tempat</p>
+      </div>
+    </div>
+    <button class="icon-btn" id="themeBtn" aria-label="Ganti tema">🌙</button>
+  </header>
+
+  <section class="hero">
+    <h2 id="greet">Halo! 👋<br><span class="grad">Mau pakai tools apa hari ini?</span></h2>
+    <p><span id="count">0</span> tools siap dipakai — tinggal ketuk.</p>
+    <div class="clock"><span class="dot"></span><span id="clock"></span></div>
+  </section>
+
+  <div class="search">
+    <span>🔍</span>
+    <input id="q" type="search" placeholder="Cari tools… (pin, chat, video, vote)" autocomplete="off">
+  </div>
+  <div class="chips" id="chips"></div>
+
+  <div id="favWrap" style="display:none">
+    <div class="section-title">⭐ Favorit</div>
+    <div class="grid" id="favGrid"></div>
+  </div>
+
+  <div class="section-title" id="allTitle">Semua Tools</div>
+  <div class="grid" id="grid"></div>
+
+  <div class="empty" id="empty"><b>🫥</b>Tidak ada tools yang cocok.</div>
+
+  <footer>Dibuat dengan ❤️ · tekan <b>/</b> untuk mencari cepat</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ====== DATA — tambah/ubah tools cukup di sini ====== */
+const TOOLS = [
+  {name:"Buat Pin",         desc:"Buat dan kelola pin dengan cepat.",               href:"gridpin_clean.html",       icon:"📌", cat:"Produktivitas", c:["#f43f5e","#fb923c"]},
+  {name:"Chat Tanpa Simpan Nomor", desc:"Kirim chat WhatsApp tanpa menyimpan nomor.", href:"quickchat_clean.html",     icon:"💬", cat:"Pesan",         c:["#22c55e","#14b8a6"]},
+  {name:"Buat Status",      desc:"Buat status yang menarik dalam sekejap.",         href:"status.html",               icon:"✨", cat:"Pesan",         c:["#8b5cf6","#ec4899"]},
+  {name:"Template Pesan",   desc:"Kirim pesan tanpa ketik manual.",                 href:"template_pesan_wa.html",   icon:"📝", cat:"Pesan",         c:["#0ea5e9","#6366f1"]},
+  {name:"Komentar Cepat",   desc:"Balas dan komentar lebih cepat.",                 href:"comentarcepat.html",       icon:"⚡", cat:"Pesan",         c:["#f59e0b","#ef4444"]},
+  {name:"Simpan Link",      desc:"Kumpulkan dan simpan semua link penting.",        href:"linkgrid_clean.html",      icon:"🔗", cat:"Produktivitas", c:["#06b6d4","#3b82f6"]},
+  {name:"Cek Pesan",        desc:"Pratinjau dan cek pesan sebelum dikirim.",        href:"nutnotes_previewcat.html", icon:"🔎", cat:"Pesan",         c:["#10b981","#84cc16"]},
+  {name:"Vote",             desc:"Buat ruang voting dan kumpulkan suara.",          href:"nutnotes-voteroom.html",   icon:"🗳️", cat:"Produktivitas", c:["#a855f7","#6366f1"]},
+  {name:"Foto Jadi Video",  desc:"Ubah foto menjadi video slideshow.",              href:"slidshow.html",            icon:"🎞️", cat:"Media",         c:["#ec4899","#f97316"]},
+  {name:"Pengingat Pesan",  desc:"Atur pengingat agar tidak ada pesan terlewat.",   href:"waremind_clean.html",      icon:"⏰", cat:"Pesan",         c:["#eab308","#f97316"]},
+  {name:"Pesan Blast",      desc:"Kirim pesan massal sekaligus.",                   href:"blast.html",               icon:"🚀", cat:"Pesan",         c:["#ef4444","#ec4899"]},
+  {name:"Catatan Harian",   desc:"Catatan berwarna untuk keseharianmu.",            href:"catatanwarna.html",        icon:"🎨", cat:"Produktivitas", c:["#14b8a6","#22d3ee"]},
+  {name:"Edit Video",       desc:"Editor video untuk Reels dan konten.",            href:"editorvideoreels.html",    icon:"🎬", cat:"Media",         c:["#6366f1","#a855f7"]},
+  {name:"Edit Foto",        desc:"Percantik foto dengan emoji dan efek.",           href:"emojifoto.html",           icon:"😎", cat:"Media",         c:["#f97316","#facc15"]},
+  {name:"Edit Foto Produk", desc:"Rapikan foto produk agar siap jualan.",           href:"fotoproduk.html",          icon:"🛍️", cat:"Media",         c:["#3b82f6","#06b6d4"]},
+];
+
+/* ====== STATE ====== */
+const $ = s => document.querySelector(s);
+const safe = {
+  get(k,d){try{return JSON.parse(localStorage.getItem(k)) ?? d}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+let favs = safe.get("grid_favs", []);
+let theme = safe.get("grid_theme", matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+let cat = "Semua";
+let query = "";
+
+/* ====== THEME ====== */
+function applyTheme(){
+  document.documentElement.dataset.theme = theme;
+  $("#themeBtn").textContent = theme === "dark" ? "🌙" : "☀️";
+  document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#0b0b17" : "#f2f3ff";
+}
+$("#themeBtn").onclick = () => { theme = theme === "dark" ? "light" : "dark"; safe.set("grid_theme", theme); applyTheme(); };
+
+/* ====== CLOCK & GREETING ====== */
+function tick(){
+  const d = new Date(), h = d.getHours();
+  const g = h < 11 ? "Selamat pagi" : h < 15 ? "Selamat siang" : h < 18 ? "Selamat sore" : "Tool Praktis";
+  $("#greet").innerHTML = g + "! 👋<br><span class='grad'>Mau pakai tools apa hari ini?</span>";
+  $("#clock").textContent = d.toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"long",year:"numeric"})
+    + " · " + d.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"});
+}
+tick(); setInterval(tick, 30000);
+
+/* ====== RENDER ====== */
+function cardHTML(t, i){
+  const on = favs.includes(t.href);
+  return `<a class="card" href="${t.href}" style="--c1:${t.c[0]};--c2:${t.c[1]};animation-delay:${i*45}ms" data-href="${t.href}">
+    <button class="fav ${on?'on':''}" data-fav="${t.href}" aria-label="Favorit">${on?'★':'☆'}</button>
+    <div class="ico">${t.icon}</div>
+    <div><h3>${t.name}</h3><p>${t.desc}</p></div>
+    <div class="foot"><span class="tag">${t.cat}</span><span class="arrow">→</span></div>
+  </a>`;
+}
+function match(t){
+  const s = query.trim().toLowerCase();
+  const okCat = cat === "Semua" || t.cat === cat;
+  const okQ = !s || (t.name + " " + t.desc + " " + t.cat + " " + t.href).toLowerCase().includes(s);
+  return okCat && okQ;
+}
+function render(){
+  const list = TOOLS.filter(match);
+  const favList = list.filter(t => favs.includes(t.href));
+  $("#favWrap").style.display = favList.length ? "block" : "none";
+  $("#favGrid").innerHTML = favList.map(cardHTML).join("");
+  const rest = list.filter(t => !favs.includes(t.href));
+  $("#grid").innerHTML = rest.map(cardHTML).join("");
+  $("#allTitle").style.display = rest.length ? "block" : "none";
+  $("#empty").style.display = list.length ? "none" : "block";
+  $("#count").textContent = TOOLS.length;
+}
+
+/* chips */
+function renderChips(){
+  const cats = ["Semua", ...new Set(TOOLS.map(t => t.cat))];
+  $("#chips").innerHTML = cats.map(c => `<button class="chip ${c===cat?'active':''}" data-cat="${c}">${c}</button>`).join("");
+}
+$("#chips").addEventListener("click", e => {
+  const b = e.target.closest(".chip"); if(!b) return;
+  cat = b.dataset.cat; renderChips(); render();
+});
+
+/* search */
+$("#q").addEventListener("input", e => { query = e.target.value; render(); });
+document.addEventListener("keydown", e => {
+  if(e.key === "/" && document.activeElement !== $("#q")){ e.preventDefault(); $("#q").focus(); }
+  if(e.key === "Escape"){ $("#q").blur(); }
+});
+
+/* favorites */
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-fav]"); if(!b) return;
+  e.preventDefault(); e.stopPropagation();
+  const h = b.dataset.fav;
+  const was = favs.includes(h);
+  favs = was ? favs.filter(x => x !== h) : [...favs, h];
+  safe.set("grid_favs", favs);
+  toast(was ? "Dihapus dari favorit" : "Ditambahkan ke favorit ⭐");
+  render();
+});
+
+/* spotlight hover */
+document.addEventListener("pointermove", e => {
+  const c = e.target.closest(".card"); if(!c) return;
+  const r = c.getBoundingClientRect();
+  c.style.setProperty("--mx", (e.clientX - r.left) + "px");
+  c.style.setProperty("--my", (e.clientY - r.top) + "px");
+});
+
+/* toast */
+let tt;
+function toast(m){
+  const t = $("#toast"); t.textContent = m; t.classList.add("show");
+  clearTimeout(tt); tt = setTimeout(() => t.classList.remove("show"), 1600);
+}
+
+applyTheme(); renderChips(); render();
+</script>
+</body>
+</html>

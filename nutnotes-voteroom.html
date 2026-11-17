@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#6C63FF">
+<title>VoteRoom</title>
+<style>
+  /* 100% offline: tanpa CDN, tanpa font eksternal, tanpa gambar URL */
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:rgba(0,0,0,0);
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  input,textarea{-webkit-user-select:text;user-select:text}
+  :root{--ink:#1B1530;--ink2:#5B5675;--line:#E7E3F3;--soft:#F3F0FA;--danger:#E5484D}
+  html,body{width:100%;height:100%;margin:0;padding:0;overflow:hidden;background:#EEE9FB;color:var(--ink);
+    font-family:Roboto,sans-serif;font-size:16px;-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation}
+  body{position:fixed;top:0;left:0;right:0;bottom:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  button,textarea{font-family:inherit;color:inherit;font-size:16px}
+  button{cursor:pointer;border:0;background:none;touch-action:manipulation}
+
+  /* ---------- Splash & error ---------- */
+  .splash{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:#8E5CF0;background:linear-gradient(150deg,#5B6CF0 0%,#9A5CF0 30%,#DB5CBE 60%,#FF8A70 85%,#FFB070 100%);
+    color:#fff;opacity:1;transition:opacity .28s}
+  .splash.off{opacity:0;pointer-events:none}
+  .sp-logo{width:84px;height:84px;border-radius:26px;background:rgba(255,255,255,.22);border:2px solid rgba(255,255,255,.55);
+    display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;letter-spacing:1px}
+  .sp-spin{width:30px;height:30px;margin-top:26px;border-radius:50%;border:3px solid rgba(255,255,255,.35);border-top-color:#fff;
+    -webkit-animation:spin .9s linear infinite;animation:spin .9s linear infinite}
+  .sp-t{margin-top:14px;font-size:16px;font-weight:600;opacity:.95}
+  @-webkit-keyframes spin{to{-webkit-transform:rotate(360deg)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .errbox{display:none;position:fixed;left:0;right:0;bottom:0;z-index:9500;background:#D93025;color:#fff;
+    padding:12px 14px 14px;max-height:45%;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+  .errbox b{display:block;font-size:15px;margin-bottom:6px}
+  #errTxt{font-size:14px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word;-webkit-user-select:text;user-select:text}
+  .errbox button{margin-top:10px;min-height:44px;padding:0 22px;border-radius:22px;background:#fff;color:#D93025;font-weight:700}
+
+  /* ---------- App ---------- */
+  .app{position:relative;width:100%;max-width:520px;height:100%;display:flex;flex-direction:column;overflow:hidden;
+    background:#F3EDFF;background:linear-gradient(165deg,#E9EFFF 0%,#F3E9FE 26%,#FDE8F3 52%,#FFF0E3 76%,#E3F8F2 100%)}
+  @media(min-width:600px){
+    html,body{background:#2A2150;background:linear-gradient(150deg,#2B2A6B,#5A2D82 45%,#8A3A6F 80%,#9A4B4B)}
+    .app{border-radius:18px;box-shadow:0 20px 60px rgba(20,10,60,.55)}
+  }
+  .ic{width:22px;height:22px;fill:currentColor;flex-shrink:0;display:block}
+  .ib{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+  /* HEADER */
+  .hdr{display:flex;flex-wrap:wrap;align-items:center;flex-shrink:0;color:#fff;position:relative;z-index:5;
+    background:#8E5CF0;background:linear-gradient(105deg,#5B6CF0 0%,#8E5CF0 28%,#D45CC8 60%,#FF7E8B 84%,#FF9F6E 100%);
+    padding:10px 6px 10px 16px;
+    padding:calc(10px + env(safe-area-inset-top,0px)) 6px 10px 16px;
+    box-shadow:0 2px 12px rgba(140,80,220,.30)}
+  .logo{width:42px;height:42px;border-radius:14px;background:rgba(255,255,255,.22);border:1.5px solid rgba(255,255,255,.55);
+    display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;margin-right:12px;flex-shrink:0}
+  .hdr-t{flex:1;min-width:0}
+  .hdr-t h1{font-size:20px;font-weight:700;line-height:1.25;text-shadow:0 1px 2px rgba(60,20,100,.25)}
+  .hdr-t p{font-size:13px;opacity:.93;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hdr .ib{color:#fff}
+  .hdr .ib:active{background:rgba(255,255,255,.25)}
+  .kb .hdr-t p{display:none}
+
+  /* TAB */
+  .tabs{display:flex;flex-shrink:0;background:rgba(255,255,255,.55);border-bottom:1px solid var(--line)}
+  .tab{position:relative;flex:1;min-width:0;height:52px;font-size:16px;font-weight:600;color:var(--ink2);
+    border-bottom:4px solid transparent;margin-bottom:-1px;white-space:nowrap}
+  .tab:active{background:rgba(255,255,255,.6)}
+  .tab.on{color:var(--ink)}
+  .tab.t-rapat.on{border-bottom-color:#8E5CF0;background:linear-gradient(180deg,rgba(108,99,255,0),rgba(168,85,247,.16))}
+  .tab.t-makan.on{border-bottom-color:#FF7E6B;background:linear-gradient(180deg,rgba(236,72,153,0),rgba(255,138,91,.18))}
+  .tab.t-jastip.on{border-bottom-color:#14B8A6;background:linear-gradient(180deg,rgba(20,184,166,0),rgba(56,189,248,.20))}
+  .tab.dirty::after{content:"";position:absolute;top:10px;right:10%;width:9px;height:9px;border-radius:50%;background:#F59E0B;border:1.5px solid #fff}
+
+  /* ISI */
+  .main{flex:1;min-height:0;display:flex;flex-direction:column;padding:14px 16px 0}
+  .bar{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;margin-bottom:10px;min-height:38px}
+  .bar-l{display:flex;align-items:center}
+  .lbl{font-size:16px;font-weight:700;margin-right:10px}
+  .stt{font-size:13px;font-weight:600;padding:4px 10px;border-radius:12px;color:#0B5A4A;
+    background:#D6F5EA;background:linear-gradient(135deg,#CDF4E3,#CFEBFF)}
+  .stt.dirty{color:#8A3F0B;background:#FFE9B8;background:linear-gradient(135deg,#FFEFB8,#FFD6C2)}
+  .link{min-height:38px;padding:0 10px;border-radius:10px;font-size:15px;font-weight:600;color:#6B3FD0}
+  .link:active{background:rgba(255,255,255,.7)}
+  .kbonly{display:none}
+  .kb .kbonly{display:block}
+  .kb .nokb{display:none}
+
+  .edwrap{flex:1;min-height:0;display:flex;padding:2px;border-radius:18px;
+    background:#A855F7;background:linear-gradient(135deg,#6C63FF,#A855F7 50%,#EC4899);box-shadow:0 4px 14px rgba(140,80,220,.20)}
+  .c-makan .edwrap{background:#FF8A5B;background:linear-gradient(135deg,#EC4899,#FF8A5B 55%,#FFB347)}
+  .c-jastip .edwrap{background:#38BDF8;background:linear-gradient(135deg,#14B8A6,#38BDF8 55%,#6C63FF)}
+  .editor{flex:1;min-height:120px;display:block;width:100%;background:#fff;border:0;border-radius:16px;
+    padding:14px;font-size:16px;line-height:1.6;resize:none;outline:0;-webkit-appearance:none;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+  .hint{flex-shrink:0;font-size:14px;line-height:1.45;color:var(--ink2);padding:10px 2px 12px}
+  .kb .hint{display:none}
+  .kb .main{padding-bottom:8px}
+
+  /* AKSI (bar atas, di dalam header) */
+  .acts{display:flex;width:100%;flex-basis:100%;margin-top:6px;padding-right:10px}
+  .acts .btn + .btn{margin-left:8px}
+  .btn{flex:1;min-width:0;min-height:52px;border-radius:26px;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;white-space:nowrap}
+  .btn .ic{margin-right:6px}
+  .btn:active{opacity:.85}
+  .btn.main{color:#fff;background:#8E5CF0;background:linear-gradient(135deg,#6C63FF 0%,#C34FD8 60%,#FF7E6B 100%);box-shadow:0 4px 12px rgba(160,80,230,.30)}
+  .btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
+  .btn.green{color:#7A3A06;border:1.5px solid #F5B14A;background:#FFEFB8;background:linear-gradient(135deg,#FFF1BE,#FFD9C4)}
+  .btn.teal{color:#0B4F4A;border:1.5px solid #B5E8DA;background:#CDF4E3;background:linear-gradient(135deg,#C8F3E2,#CBE9FF)}
+  .btn.soft{background:var(--soft);color:var(--ink)}
+  .btn.danger{color:#fff;background:#E5484D;background:linear-gradient(135deg,#E5484D,#FF8A5B)}
+  .acts .btn{min-height:44px;padding:0 6px;font-size:14px;box-shadow:none}
+  .acts .btn .ic{width:20px;height:20px;margin-right:4px}
+  .acts .btn.ghost{background:rgba(255,255,255,.22);color:#fff;border:1.5px solid rgba(255,255,255,.55)}
+  .acts .btn.green{color:#7A3A06;border:1.5px solid #FFD27A;background:#FFE9A8;background:linear-gradient(135deg,#FFF3C4,#FFD9C4)}
+  .acts .btn.teal{color:#0B4F4A;border:1.5px solid rgba(255,255,255,.6);background:#CDF4E3;background:linear-gradient(135deg,#CDF6E6,#CFEBFF)}
+  .acts .btn.main{color:#6B3FD0;background:#fff;border:1.5px solid #fff}
+
+  /* SHEET */
+  .ov{position:absolute;top:0;right:0;bottom:0;left:0;background:rgba(40,25,90,.48);display:none;align-items:flex-end;z-index:50}
+  .ov.on{display:flex}
+  .sheet{display:none;width:100%;max-height:90%;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+    background:#fff;background:linear-gradient(180deg,#FFFFFF 0%,#FBF7FF 100%);border-radius:24px 24px 0 0;
+    padding:8px 20px 20px;
+    padding:8px 20px calc(20px + env(safe-area-inset-bottom,0px))}
+  .sheet.on{display:block;-webkit-animation:up .22s ease-out;animation:up .22s ease-out}
+  @-webkit-keyframes up{from{-webkit-transform:translateY(40px);opacity:.5}to{-webkit-transform:translateY(0);opacity:1}}
+  @keyframes up{from{transform:translateY(40px);opacity:.5}to{transform:translateY(0);opacity:1}}
+  .grip{width:44px;height:5px;border-radius:3px;margin:4px auto 14px;background:#C9B8F5;background:linear-gradient(90deg,#6C63FF,#C34FD8,#FF8A70)}
+  .sheet h2{display:inline-block;font-size:21px;font-weight:700;margin-bottom:10px;color:#7C4FE0;
+    background:linear-gradient(90deg,#6C63FF,#C34FD8 55%,#FF7E6B);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .msg{font-size:17px;line-height:1.5;color:var(--ink2)}
+  .btns{display:flex;margin-top:16px}
+  .btns .btn + .btn{margin-left:10px}
+
+  .guide p{font-size:16px;line-height:1.55;margin-bottom:10px}
+  .guide h3{font-size:18px;font-weight:700;color:#6B3FD0;margin:20px 0 8px}
+  .st{display:flex;margin:12px 0;align-items:flex-start}
+  .st i{width:30px;height:30px;border-radius:50%;color:#fff;font-style:normal;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin:1px 12px 0 0}
+  .g1{background:#7C6CF2;background:linear-gradient(135deg,#6C63FF,#A855F7)}
+  .g2{background:#F472B6;background:linear-gradient(135deg,#EC4899,#FF8A5B)}
+  .g3{background:#14B8A6;background:linear-gradient(135deg,#14B8A6,#38BDF8)}
+  .g4{background:#FFB347;background:linear-gradient(135deg,#F59E0B,#FF7E6B)}
+  .g5{background:#34D399;background:linear-gradient(135deg,#34D399,#14B8A6)}
+  .st span{font-size:16px;line-height:1.5}
+  .guide ul{margin:0 0 10px 22px;font-size:16px;line-height:1.6}
+  .case{border-left:4px solid #A855F7;border-radius:12px;padding:12px 14px;margin:10px 0;background:#F6EEFF;background:linear-gradient(135deg,#EAF0FF,#F6E9FF)}
+  .case.k2{border-left-color:#FF7E6B;background:#FFF0E8;background:linear-gradient(135deg,#FFE9F2,#FFF1E2)}
+  .case b{display:block;font-size:16px;margin-bottom:4px}
+  .case span{font-size:15px;line-height:1.5;color:#3B3454}
+  .note{border-radius:12px;padding:12px 14px;font-size:15px;line-height:1.5;margin:12px 0;background:#FFF3C9;background:linear-gradient(135deg,#FFF5CF,#FFE3D6)}
+
+  .toast{position:absolute;left:50%;top:150px;top:calc(140px + env(safe-area-inset-top,0px));-webkit-transform:translateX(-50%);transform:translateX(-50%);
+    max-width:88%;color:#fff;padding:12px 20px;border-radius:24px;font-size:15px;font-weight:600;text-align:center;z-index:99;opacity:0;pointer-events:none;transition:opacity .2s;
+    background:#3A2D78;background:linear-gradient(120deg,#3A2D78,#6B2F95 60%,#9B3A7A);box-shadow:0 6px 18px rgba(40,20,90,.35)}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div id="splash" class="splash"><div class="sp-logo">VR</div><div class="sp-spin"></div><div class="sp-t">Memuat…</div></div>
+<div id="errBox" class="errbox"><b>Terjadi kesalahan</b><div id="errTxt"></div><button id="errX" type="button">Tutup</button></div>
+
+<!-- Penangkap error global (jalan pertama) -->
+<script>
+(function(){
+  function byId(i){ return document.getElementById(i); }
+  function hideSplash(){ var s=byId('splash'); if(s){ s.className='splash off'; setTimeout(function(){ s.style.display='none'; },350); } }
+  function show(msg){
+    try{
+      var b=byId('errBox'), t=byId('errTxt'); if(!b||!t) return;
+      t.appendChild(document.createTextNode(msg+'\n'));
+      b.style.display='block'; hideSplash();
+    }catch(e){}
+  }
+  window.onerror=function(msg,src,line,col){
+    show(String(msg)+(line?' (baris '+line+(col?':'+col:'')+')':''));
+    return false;
+  };
+  try{ byId('errX').addEventListener('click',function(){ byId('errBox').style.display='none'; byId('errTxt').textContent=''; }); }catch(e){}
+  window.addEventListener('load',function(){ setTimeout(hideSplash,3500); });
+})();
+</script>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-help" viewBox="0 0 24 24"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></symbol>
+  </defs>
+</svg>
+
+<div class="app c-rapat" id="app">
+
+  <div class="hdr">
+    <div class="logo">VR</div>
+    <div class="hdr-t">
+      <h1>VoteRoom</h1>
+      <p>Template vote siap tempel untuk grup WA</p>
+    </div>
+    <button class="ib" data-act="guide" aria-label="Panduan" type="button"><svg class="ic" style="width:26px;height:26px"><use href="#i-help" xlink:href="#i-help"></use></svg></button>
+    <div class="acts" id="acts">
+      <button class="btn ghost" id="btnSave" data-act="save" type="button"><svg class="ic"><use href="#i-save" xlink:href="#i-save"></use></svg><span id="saveTxt">Simpan</span></button>
+      <button class="btn teal" data-act="copy" type="button"><svg class="ic"><use href="#i-copy" xlink:href="#i-copy"></use></svg>Salin</button>
+      <button class="btn main" data-act="share" type="button"><svg class="ic"><use href="#i-share" xlink:href="#i-share"></use></svg>Bagikan</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab t-rapat on" data-act="tab" data-c="rapat" type="button">📅 Rapat</button>
+    <button class="tab t-makan" data-act="tab" data-c="makan" type="button">🍔 Makan</button>
+    <button class="tab t-jastip" data-act="tab" data-c="jastip" type="button">🛍️ Jastip</button>
+  </div>
+
+  <div class="main">
+    <div class="bar">
+      <div class="bar-l">
+        <span class="lbl">Isi pesan</span>
+        <span class="stt" id="stt">Tersimpan</span>
+      </div>
+      <button class="link nokb" data-act="reset" type="button">Kembalikan awal</button>
+      <button class="link kbonly" data-act="hideKb" type="button">Selesai</button>
+    </div>
+    <div class="edwrap"><textarea class="editor" id="ed" aria-label="Isi template"></textarea></div>
+    <div class="hint">Ganti tulisan dalam [ ] dan titik-titik (...) dengan isi kamu. Tekan Simpan agar editan tidak hilang.</div>
+  </div>
+
+  <div class="ov" id="ov">
+
+    <div class="sheet guide" id="shGuide">
+      <div class="grip"></div>
+      <h2>Fungsi aplikasi</h2>
+      <p>VoteRoom membantu kamu membuat pesan ajakan voting yang rapi untuk grup WhatsApp. Tersedia tiga template: jadwal rapat, pilihan makan, dan daftar jastip atau patungan. Semua bisa diedit, disimpan, disalin, atau dibagikan, tanpa internet.</p>
+      <div class="note">Aplikasi ini tidak menghitung suara otomatis. Anggota grup membalas pesanmu, lalu kamu merekap balasannya sendiri.</div>
+
+      <h3>Cara pakai</h3>
+      <div class="st"><i class="g1">1</i><span>Pilih jenis template: Rapat, Makan, atau Jastip.</span></div>
+      <div class="st"><i class="g2">2</i><span>Ubah isinya langsung di kolom teks. Ganti bagian [ ] dan titik-titik, lalu sesuaikan pilihan.</span></div>
+      <div class="st"><i class="g3">3</i><span>Tekan <b>Simpan</b> agar editan tersimpan di perangkat dan muncul lagi saat app dibuka.</span></div>
+      <div class="st"><i class="g4">4</i><span>Tekan <b>Salin</b> lalu tempel di grup WhatsApp, atau tekan <b>Bagikan</b> untuk langsung memilih aplikasi tujuan.</span></div>
+      <div class="st"><i class="g5">5</i><span>Minta anggota membalas pesan itu sesuai format contoh, misalnya "Budi - 1".</span></div>
+
+      <h3>Tips</h3>
+      <ul>
+        <li>Titik oranye pada tab artinya ada editan yang belum disimpan.</li>
+        <li>Pindah tab tidak menghapus editan, tapi hanya yang sudah disimpan yang bertahan setelah app ditutup.</li>
+        <li>Salin dan Bagikan memakai teks yang sedang tampil, meski belum disimpan.</li>
+        <li>Tombol Simpan, Salin, dan Bagikan ada di bar atas, jadi tetap terlihat saat keyboard terbuka. Tekan Selesai untuk menutup keyboard.</li>
+        <li>Kembalikan awal mengganti template yang sedang dibuka dengan teks bawaan.</li>
+        <li>Tanda bintang pada teks (*seperti ini*) tampil tebal di WhatsApp.</li>
+      </ul>
+
+      <h3>Contoh pemakaian</h3>
+      <div class="case"><b>Rapat bulanan</b><span>Pilih Rapat, isi agenda dan tiga pilihan waktu, simpan, lalu bagikan ke grup tim.</span></div>
+      <div class="case k2"><b>Makan siang bareng</b><span>Pilih Makan, ganti daftar tempat dengan usulan kantor, lalu minta semua balas dengan nomor pilihan.</span></div>
+
+      <div class="btns"><button class="btn main" data-act="close" type="button">Mengerti</button></div>
+    </div>
+
+    <div class="sheet" id="shConfirm">
+      <div class="grip"></div>
+      <h2>Kembalikan template awal?</h2>
+      <p class="msg">Editan dan versi tersimpan pada template ini akan diganti dengan teks bawaan.</p>
+      <div class="btns">
+        <button class="btn soft" data-act="close" type="button">Batal</button>
+        <button class="btn danger" data-act="yes" type="button">Kembalikan</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<!-- BLOK DATA -->
+<script id="dataBlock">
+(function(){
+window.NNData={
+TPL:{
+rapat:'📊 *VOTEROOM: PENJADWALAN KELOMPOK*\n\n'+
+'📌 *Agenda:* [Tulis agenda, misal: Rapat Evaluasi Bulanan]\n'+
+'📝 *Catatan:* Pilih waktu luang terbanyakmu di bawah ya.\n\n'+
+'------------------\n'+
+'*PILIHAN WAKTU:*\n'+
+'[1️⃣] Rabu, tgl... jam ... WIB\n'+
+'[2️⃣] Kamis, tgl... jam ... WIB\n'+
+'[3️⃣] Jumat, tgl... jam ... WIB\n'+
+'------------------\n\n'+
+'👉 *CARA VOTE:*\n'+
+'Balas (Reply) pesan ini dengan format:\n'+
+'*Nama - Nomor Pilihan*\n'+
+'*(Contoh: Budi - 1)*\n\n'+
+'_Powered by VoteRoom_',
+
+makan:'📊 *VOTEROOM: TENTUKAN MENU/TEMPAT*\n\n'+
+'📌 *Topik:* [Tulis agenda, misal: Makan Siang Bareng Tim]\n'+
+'📝 *Catatan:* Bebas pilih lebih dari satu kalau mau.\n\n'+
+'------------------\n'+
+'*PILIHAN MENU / TEMPAT:*\n'+
+'[1️⃣] Nasi Padang / Ayam Bakar\n'+
+'[2️⃣] Bakso & Mie Ayam Malang\n'+
+'[3️⃣] Ketoprak / Gado-gado Bu Siti\n'+
+'[4️⃣] Lainnya (Ketik sendiri)\n'+
+'------------------\n\n'+
+'👉 *CARA VOTE:*\n'+
+'Balas (Reply) pesan ini dengan format:\n'+
+'*Nama - Pilihan Nomor*\n'+
+'*(Contoh: Siska - 2)*\n\n'+
+'_Powered by VoteRoom_',
+
+jastip:'📊 *VOTEROOM: CHECKLIST JASTIP / PATUNGAN*\n\n'+
+'📌 *Keterangan:* [Tulis nama barang/event, misal: Jastip Oleh-oleh Bandung]\n'+
+'💰 *Estimasi Harga:* Rp ... / item\n\n'+
+'------------------\n'+
+'*DAFTAR ITEM / PESANAN:*\n'+
+'[1️⃣] Item A - (Jumlah: ... pcs)\n'+
+'[2️⃣] Item B - (Jumlah: ... pcs)\n'+
+'[3️⃣] Item C - (Jumlah: ... pcs)\n'+
+'------------------\n\n'+
+'👉 *CARA IKUTAN:*\n'+
+'Balas (Reply) pesan ini dengan format:\n'+
+'*Nama - Nomor Item - Jumlah*\n'+
+'*(Contoh: Dono - 1 - 2pcs)*\n\n'+
+'_Powered by VoteRoom_'
+}
+};
+})();
+</script>
+
+<!-- BLOK LOGIKA -->
+<script id="logicBlock">
+(function(){
+'use strict';
+
+var D=window.NNData||{TPL:{rapat:'',makan:'',jastip:''}};
+try{ delete window.NNData; }catch(e0){ window.NNData=null; }
+var TPL=D.TPL;
+
+var DKEY='vr_drafts', SKEY='vr_seen';
+
+/* ---------- Util ---------- */
+var mem={};
+var store={
+  get:function(k){
+    if(Object.prototype.hasOwnProperty.call(mem,k)) return mem[k];
+    try{ return localStorage.getItem(k); }catch(e){ return null; }
+  },
+  set:function(k,v){
+    try{ localStorage.setItem(k,v); delete mem[k]; return true; }
+    catch(e){ mem[k]=String(v); return false; }
+  }
+};
+function bridge(){ return window.AndroidBridge||null; }
+function $(id){ return document.getElementById(id); }
+function setCls(n,c,on){ if(on) n.classList.add(c); else n.classList.remove(c); }
+function upAttr(n,attr){ while(n&&n.nodeType===1){ if(n.hasAttribute(attr)) return n; n=n.parentNode; } return null; }
+
+var app=$('app'), ov=$('ov'), ed=$('ed');
+var saved={};            // versi tersimpan permanen
+try{ saved=JSON.parse(store.get(DKEY)||'{}')||{}; }catch(e1){ saved={}; }
+var work={};             // editan sementara selama app terbuka
+var cat='rapat', pendingFn=null, kbOn=false, baseH=window.innerHeight, baseW=window.innerWidth;
+
+function base(c){ return typeof saved[c]==='string'?saved[c]:TPL[c]; }
+function current(c){ return c===cat?ed.value:(typeof work[c]==='string'?work[c]:base(c)); }
+function isDirty(c){ return current(c)!==base(c); }
+function persist(){ return store.set(DKEY,JSON.stringify(saved)); }
+
+/* ---------- Toast ---------- */
+var tt;
+function toast(m){ var t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(function(){ t.classList.remove('show'); },2400); }
+
+/* ---------- Sheets (pengganti alert/confirm) ---------- */
+function hideAll(){ var s=ov.querySelectorAll('.sheet'); for(var i=0;i<s.length;i++) s[i].classList.remove('on'); }
+function openSheet(id){
+  hideAll(); $(id).classList.add('on'); ov.classList.add('on');
+  if(document.activeElement&&document.activeElement.blur) document.activeElement.blur();
+}
+function closeSheet(){ ov.classList.remove('on'); hideAll(); pendingFn=null; }
+ov.addEventListener('click',function(e){ if(e.target===ov) closeSheet(); });
+window.androidBack=function(){
+  if(ov.classList.contains('on')){ closeSheet(); return true; }
+  return false;
+};
+window.nutBack=window.androidBack;
+/* Aplikasi ini tidak memakai foto; callback disediakan agar jembatan Android tidak error */
+window.onPhotosPicked=function(){};
+
+/* ---------- Tampilan status ---------- */
+function refresh(){
+  var tabs=document.querySelectorAll('.tab');
+  for(var i=0;i<tabs.length;i++){
+    var c=tabs[i].getAttribute('data-c');
+    setCls(tabs[i],'on',c===cat);
+    setCls(tabs[i],'dirty',isDirty(c));
+  }
+  var d=isDirty(cat), s=$('stt'), b=$('btnSave');
+  s.textContent=d?'Belum disimpan':'Tersimpan';
+  setCls(s,'dirty',d);
+  $('saveTxt').textContent='Simpan';
+  b.className='btn '+(d?'green':'ghost');
+  app.className='app c-'+cat+(kbOn?' kb':'');
+}
+function load(c){ ed.value=typeof work[c]==='string'?work[c]:base(c); ed.scrollTop=0; }
+function setTab(c){
+  if(c===cat) return;
+  work[cat]=ed.value; cat=c; load(c); refresh();
+}
+ed.addEventListener('input',refresh);
+
+/* ---------- Salin & bagikan (aman untuk WebView) ---------- */
+function fbCopy(text){
+  var ta=document.createElement('textarea'); ta.value=text; ta.setAttribute('readonly','');
+  ta.style.cssText='position:fixed;left:-9999px;top:0;opacity:0';
+  document.body.appendChild(ta); ta.select();
+  try{ ta.setSelectionRange(0,ta.value.length); }catch(e){}
+  var ok=false; try{ ok=document.execCommand('copy'); }catch(e2){}
+  document.body.removeChild(ta); return ok;
+}
+function clipCopy(text,okMsg){
+  function done(ok){ toast(ok?okMsg:'Gagal menyalin. Pilih teks di kolom lalu salin manual.'); }
+  var b=bridge();
+  try{ if(b&&b.copyText){ b.copyText(text); done(true); return; } }catch(e){}
+  if(navigator.clipboard&&navigator.clipboard.writeText&&window.isSecureContext){
+    try{
+      navigator.clipboard.writeText(text).then(function(){ done(true); },function(){ done(fbCopy(text)); });
+    }catch(e3){ done(fbCopy(text)); }
+  } else { done(fbCopy(text)); }
+}
+function shareText(text){
+  var b=bridge();
+  try{ if(b&&b.shareText){ b.shareText(text); return; } }catch(e){}
+  try{
+    if(navigator.share){
+      var r=navigator.share({text:text});
+      if(r&&r.catch) r.catch(function(){});
+      return;
+    }
+  }catch(e2){}
+  clipCopy(text,'Tersalin. Tempel di grup WhatsApp.');
+}
+
+/* ---------- Ukuran layar & keyboard ---------- */
+function layout(){
+  var W=window.innerWidth||document.documentElement.clientWidth;
+  var H=window.innerHeight||document.documentElement.clientHeight;
+  if(W!==baseW){ baseW=W; baseH=H; }
+  if(H>baseH) baseH=H;
+  kbOn=(baseH-H)>Math.max(120,baseH*0.15);
+  var h=W>=600?Math.min(Math.round(H*0.94),860):H;
+  app.style.height=h+'px';
+  setCls(app,'kb',kbOn);
+  var sh=ov.querySelectorAll('.sheet'), mh=Math.round(h*0.9)+'px';
+  for(var i=0;i<sh.length;i++) sh[i].style.maxHeight=mh;
+  try{ window.scrollTo(0,0); }catch(e){}
+}
+window.addEventListener('resize',layout);
+window.addEventListener('orientationchange',function(){ setTimeout(layout,250); });
+
+/* ---------- Matikan zoom & menu long-press ---------- */
+document.addEventListener('contextmenu',function(e){
+  var t=e.target; if(t&&(t.tagName==='TEXTAREA'||t.tagName==='INPUT')) return;
+  e.preventDefault();
+});
+document.addEventListener('gesturestart',function(e){ e.preventDefault(); });
+
+/* ---------- Aksi ---------- */
+var ACT={
+  tab:function(t){ setTab(t.getAttribute('data-c')); },
+  guide:function(){ openSheet('shGuide'); },
+  close:closeSheet,
+  hideKb:function(){ ed.blur(); },
+  save:function(){
+    if(!ed.value.trim()){ toast('Teks masih kosong'); return; }
+    if(!isDirty(cat)){ toast('Sudah tersimpan'); return; }
+    saved[cat]=ed.value; delete work[cat];
+    var ok=persist(); refresh();
+    toast(ok?'Template disimpan':'Penyimpanan perangkat gagal, editan hanya sementara');
+  },
+  copy:function(){
+    if(!ed.value.trim()){ toast('Teks masih kosong'); return; }
+    clipCopy(ed.value,'Tersalin. Tempel di grup WhatsApp.');
+  },
+  share:function(){
+    if(!ed.value.trim()){ toast('Teks masih kosong'); return; }
+    shareText(ed.value);
+  },
+  reset:function(){
+    pendingFn=function(){ delete saved[cat]; delete work[cat]; persist(); load(cat); refresh(); toast('Template dikembalikan'); };
+    openSheet('shConfirm');
+  },
+  yes:function(){ var f=pendingFn; closeSheet(); if(f) f(); }
+};
+document.addEventListener('click',function(e){
+  var t=upAttr(e.target,'data-act'); if(!t) return;
+  var fn=ACT[t.getAttribute('data-act')]; if(fn) fn(t);
+});
+
+/* ---------- Mulai ---------- */
+layout();
+load(cat); refresh();
+if(!store.get(SKEY)){ store.set(SKEY,'1'); setTimeout(function(){ openSheet('shGuide'); },500); }
+
+var sp=$('splash');
+if(sp){ sp.className='splash off'; setTimeout(function(){ sp.style.display='none'; },350); }
+})();
+</script>
+</body>
+</html>

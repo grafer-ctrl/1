@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Editor Promosi WA Pro</title>
+
+<!-- 1) Penangkap error global: dipasang paling awal agar tidak pernah layar kosong tanpa pesan -->
+<script>
+window.onerror = function (msg, src, line, col) {
+    try {
+        var b = document.getElementById('errBox');
+        if (!b) {
+            b = document.createElement('div');
+            b.id = 'errBox';
+            (document.body || document.documentElement).appendChild(b);
+        }
+        b.style.cssText = 'position:fixed;left:8px;right:8px;top:8px;z-index:99999;background:#d32f2f;color:#fff;' +
+            'padding:12px 14px;border:2px solid #fff;border-radius:10px;font:13px/1.45 monospace;' +
+            'word-wrap:break-word;max-height:60%;overflow:auto;display:block;';
+        var p = document.createElement('div');
+        p.textContent = 'ERROR: ' + msg + ' (baris ' + line + ':' + col + ')';
+        b.appendChild(p);
+        b.onclick = function () { b.style.display = 'none'; b.innerHTML = ''; };
+        var s = document.getElementById('splash');
+        if (s) { s.style.display = 'none'; }
+    } catch (e2) {}
+    return false;
+};
+</script>
+
+<style>
+/* =========================================================
+   DASAR & LAYAR
+   ========================================================= */
+* {
+    -webkit-box-sizing: border-box; box-sizing: border-box;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    -webkit-touch-callout: none;
+    -webkit-user-select: none; user-select: none;
+}
+html, body { margin: 0; padding: 0; overflow: hidden; }
+body {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    overflow: hidden;
+    font-family: Roboto, sans-serif;
+    font-size: 15px; color: #2a2346;
+    background: #efe9ff;
+}
+button, input, textarea { font-family: Roboto, sans-serif; }
+input, textarea {
+    font-size: 16px;
+    -webkit-user-select: text; user-select: text;
+}
+
+/* Splash */
+#splash {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 90000;
+    background: #7f5af0;
+    background: linear-gradient(160deg, #b388ff, #6c4be0);
+    color: #fff; font-size: 20px; font-weight: bold;
+    display: -webkit-box; display: -webkit-flex; display: flex;
+    -webkit-align-items: center; align-items: center;
+    -webkit-justify-content: center; justify-content: center;
+}
+
+/* App: penuh layar, maksimal 520px, tengah. Tinggi dipaksa JS (px). Cadangan CSS: top+bottom 0 */
+#app {
+    position: absolute; top: 0; bottom: 0; left: 0; right: 0;
+    max-width: 520px; margin: 0 auto;
+    overflow: hidden;
+    display: -webkit-box; display: -webkit-flex; display: flex;
+    -webkit-flex-direction: column; flex-direction: column;
+    background: #f3edff;
+    background: linear-gradient(170deg, #fff6e8, #f3edff 45%, #e6f3ff);
+    padding-bottom: 0;
+    padding-bottom: constant(safe-area-inset-bottom);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* =========================================================
+   GRADIENT KATEGORI (identitas warna)
+   terang -> sedikit lebih gelap
+   ========================================================= */
+.g-blue   { background: #4aa3f0; background: linear-gradient(135deg, #62b8ff, #2f84e8); color: #fff; }
+.g-green  { background: #22b765; background: linear-gradient(135deg, #52e28c, #22b765); color: #fff; }
+.g-yellow { background: #f5c518; background: linear-gradient(135deg, #ffe678, #f6c21c); color: #4a3800; }
+.g-orange { background: #f28a1c; background: linear-gradient(135deg, #ffbe5c, #f28a1c); color: #fff; }
+.g-pink   { background: #ec4a92; background: linear-gradient(135deg, #ff8fc2, #ec4a92); color: #fff; }
+.g-purple { background: #8a5cf0; background: linear-gradient(135deg, #b99aff, #8a5cf0); color: #fff; }
+.g-red    { background: #ec4a4a; background: linear-gradient(135deg, #ff8585, #ec4a4a); color: #fff; }
+.g-soft   { background: #e7defd; background: linear-gradient(135deg, #f4efff, #ddd0fb); color: #4a2fa8; }
+.g-teal   { background: #1fb0a6; background: linear-gradient(135deg, #4de3d3, #1fb0a6); color: #fff; }
+
+button {
+    border: 0; margin: 0; padding: 0 12px;
+    font-size: 13px; font-weight: bold;
+    border-radius: 12px;
+    min-height: 44px; min-width: 44px;
+    white-space: nowrap;
+    -webkit-box-shadow: 0 3px 6px rgba(60,40,120,.22); box-shadow: 0 3px 6px rgba(60,40,120,.22);
+    outline: none;
+}
+button:active { opacity: .72; }
+.btn-sm { min-height: 38px; min-width: 38px; border-radius: 10px; font-size: 13px; }
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+#header {
+    -webkit-flex: none; flex: none;
+    padding: 5px 8px 5px 12px;
+    padding-top: 5px;
+    padding-top: constant(safe-area-inset-top);
+    padding-top: env(safe-area-inset-top, 5px);
+    background: #fff;
+    background: linear-gradient(180deg, #ffffff, #f0e9ff);
+    display: -webkit-box; display: -webkit-flex; display: flex;
+    -webkit-align-items: center; align-items: center;
+}
+#header .ttl {
+    -webkit-flex: 1; flex: 1; min-width: 0;
+    font-size: 14px; font-weight: bold; color: #4a2fa8;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+#header .hb {
+    min-height: 38px; min-width: 38px; margin-left: 5px; padding: 0 9px;
+    font-size: 12px; border-radius: 10px;
+    -webkit-box-shadow: 0 2px 4px rgba(60,40,120,.2); box-shadow: 0 2px 4px rgba(60,40,120,.2);
+}
+
+/* NAV ALAT (atas) */
+#navTools {
+    -webkit-flex: none; flex: none;
+    display: -webkit-box; display: -webkit-flex; display: flex;
+    padding: 0 5px 6px;
+    background: #f0e9ff; background: linear-gradient(180deg, #f0e9ff, #e8dffc);
+    border-bottom: 2px solid #d9cbf8;
+}
+#navTools button {
+    -webkit-flex: 1; flex: 1; min-width: 0; margin: 0 3px; padding: 0;
+    min-height: 46px;
+    display: -webkit-box; display: -webkit-flex; display: flex;
+    -webkit-flex-direction: column; flex-direction: column;
+    -webkit-align-items: center; align-items: center;
+    -webkit-justify-content: center; justify-content: center;
+    font-size: 11px;
+}
+#navTools .ic { font-size: 18px; line-height: 21px; }
+.kb #navTools { display: none; }
+
+/* =========================================================
+   PANGGUNG (kanvas)
+   ========================================================= */
+#stage {
+    -webkit-flex: 1; flex: 1; min-height: 0; position: relative; overflow: hidden;
+    display: -webkit-box; display: -webkit-flex; display: flex;
+    -webkit-align-items: center; align-items: center;
+    -webkit-justify-content: center; justify-content: center;
+}
+#frame {
+    -webkit-flex: none; flex: none;
+    padding: 3px; border-radius: 7px;
+    background: #8a5cf0;
+    background: linear-gradient(135deg, #62b8ff, #b99aff 50%, #ff8fc2);
+    -webkit-box-shadow: 0 8px 20px rgba(70,40,140,.30); box-shadow: 0 8px 20px rgba(70,40,140,.30);
+}
+#cw { position: relative; overflow: hidden; background: #fff; width: 180px; height: 320px; }
+#photoCanvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+#layer {
+    position: absolute; left: 0; top: 0; width: 360px; height: 640px;
+    -webkit-transform-origin: 0 0; transform-origin: 0 0;
+}
+
+/* Item (harga & stiker) dalam satuan desain 360x640 */
+.item {
+    position: absolute; left: 50%; top: 50%;
+    font-weight: bold; text-align: center;
+    white-space: pre; overflow: visible;
+    -webkit-transform-origin: 50% 50%; transform-origin: 50% 50%;
+}
+.item.price   { z-index: 20; }
+.item.sticker { z-index: 30; }
+.item.selected { outline: 2px dashed #5b6cff; outline-offset: 3px; }
+
+/* =========================================================
+   TOOLS ITEM (di dalam alur layout, bukan melayang)
+   ========================================================= */
+#itemTools {
+    -webkit-flex: none; flex: none; display: none;
+    padding: 6px 8px;
+    background: #fff; background: linear-gradient(180deg, #ffffff, #f4efff);
+    border-top: 1px solid #e1d5fb;
+}
+#itemTools.show { display: -webkit-box; display: -webkit-flex; display: flex; }
+#itemTools button { -webkit-flex: 1; flex: 1; margin: 0 3px; padding: 0 4px; min-height: 40px; font-size: 15px; }
+
+/* =========================================================
+   PANEL BAWAH (di dalam alur layout, tinggi diatur JS)
+   ========================================================= */
+#panelHost { -webkit-flex: none; flex: none; height: 0; overflow: hidden; background: #fff; }
+.panel {
+    display: none; height: 100%;
+    -webkit-flex-direction: column; flex-direction: column;
+    background: #fff;
+    border-top-left-radius: 18px; border-top-right-radius: 18px;
+    overflow: hidden;
+}
+.panel.open { display: -webkit-box; display: -webkit-flex; display: flex; }
+.panel .phd {
+    -webkit-flex: none; flex: none;
+    display: -webkit-box; display: -webkit-flex; display: flex;
+    -webkit-align-items: center; align-items: center;
+    padding: 6px 8px 6px 16px;
+}
+.panel .phd h3 { -webkit-flex: 1; flex: 1; margin: 0; font-size: 16px; }
+.panel .phd button {
+    background: rgba(255,255,255,.28); color: #fff; font-size: 20px;
+    -webkit-box-shadow: none; box-shadow: none; padding: 0;
+}
+.pbody {
+    -webkit-flex: 1; flex: 1; min-height: 0;
+    overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+}
+.grid { display: -webkit-box; display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; padding: 10px 0 4px 10px; }
+.tile {
+    width: 49.9%; width: calc(50% - 8px);
+    margin: 0 8px 8px 0;
+    min-height: 52px; padding: 8px;
+    display: -webkit-box; display: -webkit-flex; display: flex;
+    -webkit-align-items: center; align-items: center;
+    -webkit-justify-content: center; justify-content: center;
+    text-align: center; font-size: 12px; font-weight: bold;
+    white-space: pre-line; word-wrap: break-word;
+}
+.tile:active { -webkit-transform: scale(.95); transform: scale(.95); }
+.grid.wide .tile { width: calc(100% - 8px); }
+@media (min-width: 430px) {
+    .tile { width: 33.2%; width: calc(33.333% - 8px); }
+    .grid.wide .tile { width: calc(100% - 8px); }
+}
+.linkrow { display: -webkit-box; display: -webkit-flex; display: flex; padding: 10px 10px 0; }
+.linkrow input {
+    -webkit-flex: 1; flex: 1; min-width: 0; height: 44px; padding: 0 12px;
+    border: 2px solid #c9f0d9; border-radius: 12px; background: #f6fffa; color: #1d3a2a;
+}
+.linkrow button { margin-left: 8px; }
+
+/* Panel Atur Foto */
+.pctl { padding: 14px 16px; }
+.seg { display: -webkit-box; display: -webkit-flex; display: flex; }
+.seg button { -webkit-flex: 1; flex: 1; margin-right: 8px; font-size: 13px; background: #e9f5f4; color: #17766f; -webkit-box-shadow: none; box-shadow: none; white-space: normal; }
+.seg button:last-child { margin-right: 0; }
+.seg button.active { background: #1fb0a6; background: linear-gradient(135deg, #4de3d3, #1fb0a6); color: #fff; }
+.pctl label { display: block; margin: 14px 0 6px; font-weight: bold; color: #17766f; font-size: 14px; }
+.pctl input[type=range] { width: 100%; height: 30px; margin: 0; }
+.pctl .hint { font-size: 12px; color: #6a6a85; line-height: 1.5; margin: 10px 0 0; }
+.pctl .rst { width: 100%; margin-top: 6px; }
+
+/* =========================================================
+   MODAL & TOAST (buatan sendiri)
+   ========================================================= */
+.overlay {
+    position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 3000;
+    background: rgba(40,25,80,.55); padding: 18px;
+    display: none;
+    -webkit-align-items: center; align-items: center;
+    -webkit-justify-content: center; justify-content: center;
+}
+.overlay.show { display: -webkit-box; display: -webkit-flex; display: flex; }
+.mbox {
+    background: #fff; border-radius: 16px; padding: 16px;
+    width: 100%; max-width: 360px; max-height: 100%; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    -webkit-box-shadow: 0 10px 30px rgba(0,0,0,.35); box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+.mbox h3 { margin: 0 0 10px; font-size: 17px; color: #4a2fa8; }
+.mbox textarea {
+    width: 100%; height: 100px; padding: 10px; font-size: 16px;
+    border: 2px solid #ddd0fb; border-radius: 12px; resize: none; background: #faf7ff; color: #2a2346;
+}
+.mact { display: -webkit-box; display: -webkit-flex; display: flex; -webkit-justify-content: flex-end; justify-content: flex-end; margin-top: 12px; }
+.mact button { margin-left: 8px; padding: 0 18px; }
+.mbox ul { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.65; color: #3b3560; }
+.mbox ul li { margin-bottom: 4px; }
+#previewImg { display: block; width: 100%; border-radius: 8px; -webkit-user-select: auto; user-select: auto; -webkit-touch-callout: default; }
+
+#toast {
+    position: absolute; left: 50%; top: 104px; z-index: 4000;
+    -webkit-transform: translateX(-50%); transform: translateX(-50%);
+    background: #3a2d7a; background: linear-gradient(135deg, #6a4fd8, #3f2c92);
+    color: #fff; padding: 10px 18px; border-radius: 22px; font-size: 13px;
+    opacity: 0; max-width: 90%; text-align: center;
+    pointer-events: none;
+    -webkit-transition: opacity .25s; transition: opacity .25s;
+}
+#toast.show { opacity: 1; }
+#fileInput { display: none; }
+</style>
+</head>
+<body>
+
+<div id="splash">Memuat…</div>
+
+<div id="app">
+
+    <div id="header">
+        <div class="ttl">Editor Promosi WA</div>
+        <button class="g-soft hb" id="btnHelp">?</button>
+        <button class="g-orange hb" id="btnSave">⬇️ Simpan</button>
+        <button class="g-red hb" id="btnShare">📤 Bagikan</button>
+    </div>
+
+    <div id="navTools">
+        <button class="g-blue"   id="btnPhoto"><span class="ic">🖼️</span>Foto</button>
+        <button class="g-teal"   id="btnFit"><span class="ic">🎚️</span>Atur</button>
+        <button class="g-yellow" id="btnPrice"><span class="ic">💰</span>Harga</button>
+        <button class="g-pink"   id="btnModel"><span class="ic">🎨</span>Model</button>
+        <button class="g-purple" id="btnSticker"><span class="ic">⭐</span>Stiker</button>
+        <button class="g-green"  id="btnLink"><span class="ic">🔗</span>Link</button>
+    </div>
+
+    <div id="stage">
+        <div id="frame">
+            <div id="cw">
+                <canvas id="photoCanvas" width="1080" height="1920"></canvas>
+                <div id="layer"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="itemTools">
+        <button class="g-blue"   id="tEdit">✏️</button>
+        <button class="g-orange" id="tSmaller">−</button>
+        <button class="g-green"  id="tBigger">+</button>
+        <button class="g-purple" id="tRotate">⟳</button>
+        <button class="g-red"    id="tDelete">🗑️</button>
+    </div>
+
+    <div id="panelHost">
+
+        <div class="panel" id="photoPanel">
+            <div class="phd g-teal"><h3>Atur Foto</h3><button class="btn-sm" data-close="1">✕</button></div>
+            <div class="pbody"><div class="pctl">
+                <div class="seg">
+                    <button id="mFit">Utuh (tidak terpotong)</button>
+                    <button id="mFill">Penuh (isi layar)</button>
+                </div>
+                <label for="zoomRange">Zoom</label>
+                <input type="range" id="zoomRange" min="1" max="3" step="0.05" value="1">
+                <button class="g-soft rst" id="photoReset">Reset posisi &amp; zoom</button>
+                <p class="hint">Mode <b>Utuh</b>: seluruh foto terlihat, sisa ruang diisi latar buram dari foto itu sendiri. Mode <b>Penuh</b>: foto memenuhi layar 9:16, pinggir bisa terpotong. Geser area kosong untuk menggeser foto, cubit 2 jari untuk zoom.</p>
+            </div></div>
+        </div>
+
+        <div class="panel" id="stickerPanel">
+            <div class="phd g-purple"><h3>Pilih Stiker</h3><button class="btn-sm" data-close="1">✕</button></div>
+            <div class="pbody"><div class="grid" id="stickerGrid"></div></div>
+        </div>
+
+        <div class="panel" id="linkPanel">
+            <div class="phd g-green"><h3>Stiker Link / Ajakan Chat</h3><button class="btn-sm" data-close="1">✕</button></div>
+            <div class="pbody">
+                <div class="linkrow">
+                    <input type="text" id="customLinkText" placeholder="Atau ketik teks sendiri..." maxlength="80">
+                    <button class="g-green" id="btnCustomLink">Buat</button>
+                </div>
+                <div class="grid wide" id="linkGrid"></div>
+            </div>
+        </div>
+
+        <div class="panel" id="modelPanel">
+            <div class="phd g-pink"><h3>Pilih Model Kotak Harga</h3><button class="btn-sm" data-close="1">✕</button></div>
+            <div class="pbody"><div class="grid" id="modelGrid"></div></div>
+        </div>
+
+    </div>
+
+    <input type="file" id="fileInput" accept="image/*">
+
+    <div class="overlay" id="editModal">
+        <div class="mbox">
+            <h3>Edit Teks</h3>
+            <textarea id="editText"></textarea>
+            <div class="mact">
+                <button class="g-soft" id="editCancel">Batal</button>
+                <button class="g-green" id="editSave">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="guideModal">
+        <div class="mbox">
+            <h3>📖 Panduan singkat</h3>
+            <ul>
+                <li><b>Geser</b> harga / stiker dengan satu jari.</li>
+                <li><b>Cubit 2 jari</b> pada harga / stiker untuk memperbesar atau memperkecil.</li>
+                <li><b>Ketuk 2x</b> (atau tombol ✏️) untuk mengubah teks.</li>
+                <li><b>Atur</b>: pilih <i>Utuh</i> atau <i>Penuh</i>. Geser area kosong untuk menggeser foto, cubit untuk zoom.</li>
+                <li>Link tidak bisa diklik di gambar. Pakai <b>Link</b> sebagai ajakan, lalu kirim link-nya sebagai pesan setelah foto.</li>
+            </ul>
+            <div class="mact"><button class="g-purple" id="guideOk">Mengerti</button></div>
+        </div>
+    </div>
+
+    <div class="overlay" id="previewModal">
+        <div class="mbox">
+            <h3>Hasil gambar</h3>
+            <img id="previewImg" alt="hasil">
+            <div class="mact"><button class="g-purple" id="previewClose">Tutup</button></div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+</div>
+
+<!-- 2) BLOK DATA (terpisah dari logika) -->
+<script>
+(function () {
+'use strict';
+var P = {
+    blue:   ['#62b8ff', '#2f84e8'],
+    blue2:  ['#58a6ee', '#2a6fc4'],
+    teal:   ['#4de3d3', '#1fb0a6'],
+    green:  ['#52e28c', '#22b765'],
+    wa:     ['#4fe58a', '#1fb857'],
+    wadark: ['#2aa392', '#075e54'],
+    wa2:    ['#3fb8a4', '#128c7e'],
+    yellow: ['#ffe678', '#f6c21c'],
+    orange: ['#ffbe5c', '#f28a1c'],
+    pink:   ['#ff8fc2', '#ec4a92'],
+    pink2:  ['#ffa8d0', '#ee5f9f'],
+    purple: ['#b99aff', '#8a5cf0'],
+    indigo: ['#9c7dff', '#5f3cd8'],
+    red:    ['#ff8585', '#ec4a4a'],
+    red2:   ['#ff6b6b', '#d63031'],
+    redDk:  ['#e85a4f', '#b8281f'],
+    navy:   ['#5a7592', '#2c3e50'],
+    dark:   ['#3b3b4f', '#17171f'],
+    white:  ['#ffffff', '#eceffc']
+};
+var SOFT = [0, 4, 6, 'rgba(0,0,0,.28)'];
+
+window.FP_DATA = {
+    palette: P,
+    defaultShadow: SOFT,
+    models: [
+        { n: 'Putih Klasik',   g: P.white,  c: '#1c1c28', bw: 2, bc: '#1c1c28', r: 0,  sh: [4, 4, 0, '#1c1c28'] },
+        { n: 'Hitam Elegan',   g: P.dark,   c: '#ffffff', bw: 2, bc: '#ffffff', r: 8,  sh: [0, 4, 10, 'rgba(0,0,0,.45)'] },
+        { n: 'Tanpa Kotak',    g: null,     c: '#ffffff', bw: 0, r: 0, sh: null, st: '#000000' },
+        { n: 'Hijau Segar',    g: ['#ffffff', '#dcf8e5'], c: '#1b9a50', bw: 3, bc: '#2ecc71', r: 10, sh: [0, 0, 10, '#2ecc71'] },
+        { n: 'Merah Cabai',    g: ['#ffffff', '#ffe1e1'], c: '#d92f2f', bw: 3, bc: '#ff5252', r: 10, sh: [0, 0, 10, '#ff5252'] },
+        { n: 'Kuning Ceria',   g: P.yellow, c: '#3a2f00', bw: 2, bc: '#3a2f00', r: 0,  sh: [3, 3, 0, '#3a2f00'] },
+        { n: 'Biru Laut',      g: P.blue,   c: '#ffffff', bw: 2, bc: '#ffffff', r: 12, sh: [0, 4, 6, 'rgba(0,0,0,.3)'] },
+        { n: 'Splash Miring',  g: P.red,    c: '#ffffff', bw: 0, r: [20, 0, 20, 0], sh: null, rot: -5 },
+        { n: 'Ungu Manis',     g: P.purple, c: '#ffffff', bw: 0, r: 14, sh: [0, 5, 8, 'rgba(90,50,180,.4)'] },
+        { n: 'Toska Segar',    g: P.teal,   c: '#ffffff', bw: 0, r: 14, sh: [0, 5, 8, 'rgba(10,110,100,.4)'] },
+        { n: 'Pink Permen',    g: P.pink,   c: '#ffffff', bw: 2, bc: '#ffffff', r: 18, sh: [0, 5, 8, 'rgba(160,30,90,.4)'] },
+        { n: 'Oranye Hangat',  g: P.orange, c: '#ffffff', bw: 0, r: [0, 18, 0, 18], sh: [3, 3, 0, 'rgba(120,60,0,.55)'] }
+    ],
+    stickers: [
+        { t: 'DISKON 10%', g: P.red, c: '#fff', r: 50 },
+        { t: 'DISKON 20%', g: P.orange, c: '#fff', r: 6 },
+        { t: 'DISKON 50%', g: P.green, c: '#fff', r: 6 },
+        { t: 'BISA COD', g: P.blue, c: '#fff', r: 50 },
+        { t: 'COD!', g: P.blue2, c: '#fff', r: 50 },
+        { t: 'GRATIS ONGKIR', g: P.purple, c: '#fff', r: 50 },
+        { t: 'PROMO', g: P.pink, c: '#fff', r: 50 },
+        { t: 'PROMO!', g: P.yellow, c: '#3a2f00', r: 50 },
+        { t: 'TERLARIS', g: P.pink2, c: '#fff', r: 50 },
+        { t: 'NEW', g: P.teal, c: '#fff', r: 50 },
+        { t: 'HOT 🔥', g: P.red2, c: '#fff', r: 50 },
+        { t: 'MURAH!', g: P.yellow, c: '#3a2f00', r: [20, 0, 20, 0], rot: -10 },
+        { t: 'BEST SELLER', g: P.indigo, c: '#fff', r: [20, 0, 20, 0], rot: -10 },
+        { t: 'LIMITED', g: P.red, c: '#fff', r: 6, sh: [0, 0, 10, '#ec4a4a'] },
+        { t: 'STOK TERBATAS', g: P.redDk, c: '#fff', r: 6, rot: 5 },
+        { t: 'READY STOCK', g: P.green, c: '#fff', r: 50 },
+        { t: 'ORI 100%', g: P.navy, c: '#fff', r: 6 },
+        { t: 'GARANSI', g: P.teal, c: '#fff', r: 50 },
+        { t: 'SALE!', g: ['#ff7a6b', '#ff3d5a'], c: '#fff', r: [20, 0, 20, 0], rot: 8 },
+        { t: 'BUY 1 GET 1', g: P.indigo, c: '#fff', r: 50 },
+        { t: 'FLASH SALE ⚡', g: P.orange, c: '#3a2200', r: 6 },
+        { t: 'JANGAN SAMPAI KEHABISAN', g: P.dark, c: '#ffd93d', r: 6 },
+        { t: 'KUALITAS TERBAIK', g: P.white, c: '#e03a3a', r: 50, bw: 2, bc: '#ec4a4a' },
+        { t: 'PENGIRIMAN CEPAT 🚚', g: P.blue, c: '#fff', r: 50 }
+    ],
+    links: [
+        { t: 'Minat? Yuk langsung chat sekarang!', g: P.wa, c: '#fff', r: 50 },
+        { t: '👇 Klik link setelah ini 👇', g: P.wadark, c: '#fff', r: 50 },
+        { t: '🔗 Klik link setelah ini', g: P.white, c: '#075e54', r: 50, bw: 2, bc: '#25D366' },
+        { t: 'Minat? Yuk langsung chat sekarang!\nKlik link setelah ini 👇', g: P.wa, c: '#fff', r: 16 },
+        { t: '💬 Chat sekarang, klik link setelah ini', g: P.wa2, c: '#fff', r: 50 },
+        { t: 'Minat? Klik link setelah ini!', g: P.red, c: '#fff', r: 50 },
+        { t: 'Pesan via WhatsApp 👉 klik link', g: P.yellow, c: '#3a2f00', r: 50 },
+        { t: 'Minat? Yuk langsung chat sekarang!', g: P.dark, c: '#4fe58a', r: 8, bw: 2, bc: '#25D366' }
+    ]
+};
+})();
+</script>
+
+<!-- 3) BLOK LOGIKA -->
+<script>
+(function () {
+'use strict';
+
+var D = window.FP_DATA;
+var DW = 360, DH = 640;      /* satuan desain lapisan item */
+var PW = 1080, PH = 1920;    /* resolusi kanvas foto & hasil */
+var MAXSIDE = 1600;          /* sisi terpanjang foto dari galeri */
+var FONT = 'Roboto, sans-serif';
+
+function $(id) { return document.getElementById(id); }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function setT(el, v) { el.style.webkitTransform = v; el.style.transform = v; }
+function extend(a, b) { for (var k in b) { if (b.hasOwnProperty(k)) { a[k] = b[k]; } } return a; }
+function hasBridge(m) { var b = window.AndroidBridge; return !!(b && b[m]); }
+function dist(a, b) { var dx = a.x - b.x, dy = a.y - b.y; return Math.sqrt(dx * dx + dy * dy) || 1; }
+
+var app = $('app'), stage = $('stage'), cw = $('cw'), layer = $('layer');
+var host = $('panelHost'), tools = $('itemTools');
+
+/* ---------- Toast ---------- */
+var toastTimer = null;
+function toast(msg) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.className = 'show';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.className = ''; }, 2300);
+}
+
+/* ---------- Storage aman ---------- */
+function store(k, v) { try { window.localStorage.setItem(k, v); } catch (e) {} }
+function load(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
+
+/* =========================================================
+   TATA LETAK (ukuran dihitung JS, bukan persen/vh)
+   ========================================================= */
+var selected = null, openId = null, kb = false;
+var baseH = 0, lastW = 0, lastH = 0;
+
+function panelHeight(id, h) {
+    if (id === 'photoPanel') { return Math.min(290, Math.round(h * (kb ? 0.7 : 0.55))); }
+    return Math.round(h * (kb ? 0.62 : 0.48));
+}
+
+function updateTools() {
+    var show = !!selected && !openId && !kb;
+    tools.className = show ? 'show' : '';
+}
+
+function layout() {
+    var h = window.innerHeight || document.documentElement.clientHeight || 0;
+    var w = window.innerWidth || document.documentElement.clientWidth || 0;
+    if (h > 0) {
+        if (w !== lastW || baseH === 0) { baseH = h; }
+        if (h > baseH) { baseH = h; }
+        var kbNow = (baseH - h) > 120;
+        if (kbNow !== kb) {
+            kb = kbNow;
+            app.className = kb ? 'kb' : '';
+        }
+        app.style.height = h + 'px';
+    }
+    lastW = w; lastH = h;
+
+    host.style.height = (openId ? panelHeight(openId, h || 480) : 0) + 'px';
+    updateTools();
+
+    var sw = stage.clientWidth, sh = stage.clientHeight;
+    var pad = 12, frameExtra = 6;
+    var availW = sw - pad * 2 - frameExtra;
+    var availH = sh - pad * 2 - frameExtra;
+    var cwW = Math.min(availW, availH * 9 / 16);
+    if (cwW * 16 / 9 < 120) { cwW = 120 * 9 / 16; }      /* tinggi minimal 120px */
+    if (cwW < 40) { cwW = 40; }
+    cwW = Math.floor(cwW);
+    var cwH = Math.floor(cwW * 16 / 9);
+    cw.style.width = cwW + 'px';
+    cw.style.height = cwH + 'px';
+    setT(layer, 'scale(' + (cwW / DW) + ')');
+}
+
+setInterval(function () {
+    var h = window.innerHeight, w = window.innerWidth;
+    if (h !== lastH || w !== lastW) { layout(); }
+}, 350);
+window.addEventListener('resize', layout, false);
+window.addEventListener('orientationchange', function () { setTimeout(layout, 120); }, false);
+
+/* Matikan menu long-press (kecuali gambar hasil) */
+document.addEventListener('contextmenu', function (e) {
+    var t = e.target;
+    if (t && t.id === 'previewImg') { return; }
+    e.preventDefault();
+}, false);
+
+/* =========================================================
+   FOTO (kanvas 1080x1920 = tepat 9:16)
+   ========================================================= */
+var pc = $('photoCanvas');
+var pctx = pc.getContext('2d');
+var ph = { img: null, bg: null, mode: 'fit', zoom: 1, ox: 0, oy: 0 };
+
+function coverDraw(g, img, W, H) {
+    var k = Math.max(W / img.width, H / img.height);
+    var w = img.width * k, h = img.height * k;
+    g.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+}
+function buildBg() {
+    var s = document.createElement('canvas');
+    s.width = 27; s.height = 48;
+    coverDraw(s.getContext('2d'), ph.img, 27, 48);
+    ph.bg = s;
+}
+function drawPhoto() {
+    var g = pctx;
+    g.fillStyle = '#ffffff';
+    g.fillRect(0, 0, PW, PH);
+    if (!ph.img) { return; }
+    var iw = ph.img.width, ih = ph.img.height;
+    g.imageSmoothingEnabled = true;
+    try { g.imageSmoothingQuality = 'high'; } catch (e) {}
+    if (ph.mode === 'fit') {
+        g.drawImage(ph.bg, 0, 0, PW, PH);
+        g.fillStyle = 'rgba(255,255,255,.18)';
+        g.fillRect(0, 0, PW, PH);
+    }
+    var base = ph.mode === 'fit' ? Math.min(PW / iw, PH / ih) : Math.max(PW / iw, PH / ih);
+    var s = base * ph.zoom;
+    var dw = iw * s, dh = ih * s;
+    var mx = Math.max(0, (dw - PW) / 2), my = Math.max(0, (dh - PH) / 2);
+    ph.ox = clamp(ph.ox, -mx, mx);
+    ph.oy = clamp(ph.oy, -my, my);
+    g.drawImage(ph.img, (PW - dw) / 2 + ph.ox, (PH - dh) / 2 + ph.oy, dw, dh);
+}
+function syncPhotoUI() {
+    $('mFit').className = ph.mode === 'fit' ? 'active' : '';
+    $('mFill').className = ph.mode === 'fill' ? 'active' : '';
+    $('zoomRange').value = ph.zoom;
+}
+function setPhoto(img) {
+    ph.img = img; ph.mode = 'fit'; ph.zoom = 1; ph.ox = 0; ph.oy = 0;
+    buildBg(); drawPhoto(); syncPhotoUI();
+}
+
+/* placeholder awal (digambar langsung di kanvas, tanpa gambar eksternal) */
+function makePlaceholder() {
+    var c = document.createElement('canvas');
+    c.width = 900; c.height = 1600;
+    var g = c.getContext('2d');
+    var gr = g.createLinearGradient(0, 0, 900, 1600);
+    gr.addColorStop(0, '#fff3d6'); gr.addColorStop(0.5, '#f1e8ff'); gr.addColorStop(1, '#dcefff');
+    g.fillStyle = gr; g.fillRect(0, 0, 900, 1600);
+    g.fillStyle = '#9a8bd0'; g.textAlign = 'center';
+    g.font = 'bold 72px ' + FONT; g.fillText('Foto Produk', 450, 770);
+    g.font = '40px ' + FONT; g.fillText('Ketuk tombol \"Foto\" untuk memilih', 450, 850);
+    setPhoto(c);
+}
+
+/* Perkecil foto: sisi terpanjang maks 1600px (hemat memori WebView) */
+function handlePhotoURI(uri, done) {
+    var img = new Image();
+    img.onload = function () {
+        try {
+            var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+            var k = Math.min(1, MAXSIDE / Math.max(w, h));
+            var c = document.createElement('canvas');
+            c.width = Math.max(1, Math.round(w * k));
+            c.height = Math.max(1, Math.round(h * k));
+            c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+            img.onload = null; img.onerror = null; img.src = '';
+            setPhoto(c);
+            toast('Foto dimuat. Ketuk \"Atur\" untuk mode Penuh');
+        } catch (err) {
+            toast('Foto terlalu besar / gagal diproses');
+        }
+        if (done) { done(); }
+    };
+    img.onerror = function () { toast('Foto tidak bisa dibaca'); if (done) { done(); } };
+    img.src = uri;
+}
+
+/* Callback dari Android */
+window.onPhotosPicked = function (arr) {
+    try {
+        if (typeof arr === 'string') {
+            if (arr.indexOf('data:') === 0) { arr = [arr]; }
+            else { arr = JSON.parse(arr); }
+        }
+        if (!arr || !arr.length) { return; }
+        handlePhotoURI(arr[0]);
+        if (arr.length > 1) { toast('Dipilih ' + arr.length + ' foto, memakai yang pertama'); }
+    } catch (e) { toast('Gagal membaca foto dari galeri'); }
+};
+
+$('btnPhoto').onclick = function () {
+    if (hasBridge('pickPhoto')) {
+        try { window.AndroidBridge.pickPhoto(); return; } catch (e) { toast('Galeri gagal dibuka'); }
+    }
+    $('fileInput').click();   /* fallback browser biasa */
+};
+$('fileInput').onchange = function (e) {
+    var f = e.target.files && e.target.files[0];
+    if (!f) { return; }
+    var r = new FileReader();
+    r.onload = function (ev) { handlePhotoURI(ev.target.result); };
+    r.onerror = function () { toast('Foto tidak bisa dibaca'); };
+    r.readAsDataURL(f);
+    e.target.value = '';
+};
+
+$('btnFit').onclick = function () { openPanel('photoPanel'); };
+$('mFit').onclick = function () { ph.mode = 'fit'; ph.ox = 0; ph.oy = 0; drawPhoto(); syncPhotoUI(); };
+$('mFill').onclick = function () { ph.mode = 'fill'; ph.ox = 0; ph.oy = 0; drawPhoto(); syncPhotoUI(); };
+$('zoomRange').oninput = function () { ph.zoom = parseFloat(this.value); drawPhoto(); };
+$('photoReset').onclick = function () { ph.zoom = 1; ph.ox = 0; ph.oy = 0; drawPhoto(); syncPhotoUI(); };
+
+/* =========================================================
+   GAYA ITEM (satu sumber untuk DOM & hasil gambar)
+   ========================================================= */
+function normR(r) {
+    if (r === undefined || r === null) { r = 6; }
+    if (typeof r === 'number') { return [r, r, r, r]; }
+    return r;
+}
+function normStyle(d) {
+    return {
+        g: d.g || null,
+        c: d.c || '#fff',
+        bw: d.bw || 0,
+        bc: d.bc || '#fff',
+        r: normR(d.r),
+        sh: d.sh === undefined ? D.defaultShadow : d.sh,
+        st: d.st || null
+    };
+}
+function applyBoxCss(el, st) {
+    var s = el.style;
+    if (st.g) {
+        s.background = st.g[0];
+        s.background = 'linear-gradient(135deg,' + st.g[0] + ',' + st.g[1] + ')';
+    } else { s.background = 'transparent'; }
+    s.color = st.c;
+    s.border = st.bw ? (st.bw + 'px solid ' + st.bc) : 'none';
+    s.borderRadius = st.r[0] + 'px ' + st.r[1] + 'px ' + st.r[2] + 'px ' + st.r[3] + 'px';
+    s.boxShadow = st.sh ? (st.sh[0] + 'px ' + st.sh[1] + 'px ' + st.sh[2] + 'px ' + st.sh[3]) : 'none';
+    s.textShadow = st.st ? ('2px 2px 0 ' + st.st + ',-2px -2px 0 ' + st.st + ',2px -2px 0 ' + st.st + ',-2px 2px 0 ' + st.st) : 'none';
+}
+
+/* ---------- ukur & bungkus teks ---------- */
+var mctx = document.createElement('canvas').getContext('2d');
+function fontStr(fs) { return 'bold ' + fs + 'px ' + FONT; }
+function mw(s) { return mctx.measureText(s).width; }
+function wrapLines(text, maxW) {
+    var out = [], paras = String(text).split('\n'), p, i, j;
+    for (p = 0; p < paras.length; p++) {
+        var words = paras[p].split(' '), line = '';
+        for (i = 0; i < words.length; i++) {
+            var word = words[i];
+            var test = line ? (line + ' ' + word) : word;
+            if (mw(test) <= maxW) { line = test; }
+            else {
+                if (line) { out.push(line); line = ''; }
+                if (mw(word) > maxW) {
+                    var chunk = '';
+                    for (j = 0; j < word.length; j++) {
+                        if (chunk && mw(chunk + word.charAt(j)) > maxW) { out.push(chunk); chunk = word.charAt(j); }
+                        else { chunk += word.charAt(j); }
+                    }
+                    line = chunk;
+                } else { line = word; }
+            }
+        }
+        out.push(line);
+    }
+    return out;
+}
+
+/* =========================================================
+   ITEM (harga & stiker)
+   ========================================================= */
+var stickerCount = 0;
+
+function applyTransform(el) {
+    var m = el._m;
+    setT(el, 'translate(-50%, -50%) rotate(' + m.rot + 'deg) scale(' + m.sc + ')');
+}
+function renderItem(el) {
+    var m = el._m, st = m.style;
+    m.padX = m.kind === 'price' ? 16 : 14;
+    m.padY = m.kind === 'price' ? 10 : 8;
+    m.lh = Math.round(m.fs * 1.3 * 10) / 10;
+    mctx.font = fontStr(m.fs);
+    var maxW = 316 - 2 * m.padX - 2 * st.bw;
+    m.lines = wrapLines(m.raw, maxW);
+    var tw = 0, i;
+    for (i = 0; i < m.lines.length; i++) { tw = Math.max(tw, mw(m.lines[i])); }
+    m.w = Math.ceil(tw) + 2 * m.padX + 2 * st.bw + 1;
+    m.h = Math.ceil(m.lines.length * m.lh) + 2 * m.padY + 2 * st.bw;
+
+    el.textContent = m.lines.join('\n');
+    applyBoxCss(el, st);
+    el.style.fontSize = m.fs + 'px';
+    el.style.lineHeight = m.lh + 'px';
+    el.style.padding = m.padY + 'px ' + m.padX + 'px';
+    el.style.width = m.w + 'px';
+    el.style.height = m.h + 'px';
+    el.style.left = m.x + '%';
+    el.style.top = m.y + '%';
+    applyTransform(el);
+}
+
+function select(el) {
+    if (selected) { selected.className = selected.className.replace(' selected', ''); }
+    selected = el;
+    if (el) { el.className += ' selected'; }
+    updateTools();
+}
+
+function createItem(kind, text, styleData, opts) {
+    opts = opts || {};
+    var el = document.createElement('div');
+    el.className = 'item ' + kind;
+    el._m = {
+        kind: kind, raw: text, style: normStyle(styleData),
+        fs: opts.fs || (kind === 'price' ? 17 : 14),
+        x: opts.x !== undefined ? opts.x : 50,
+        y: opts.y !== undefined ? opts.y : 50,
+        rot: opts.rot || 0, sc: opts.scale || 1
+    };
+    layer.appendChild(el);
+    renderItem(el);
+    select(el);
+    return el;
+}
+
+/* ---------- GESTURE: geser 1 jari, cubit 2 jari (touch + mouse) ---------- */
+var pts = [];
+var gs = null;
+var lastTap = { el: null, t: 0 };
+
+function ptGet(id) { for (var i = 0; i < pts.length; i++) { if (pts[i].id === id) { return pts[i]; } } return null; }
+function ptDel(id) { for (var i = 0; i < pts.length; i++) { if (pts[i].id === id) { pts.splice(i, 1); return; } } }
+function findItem(t) {
+    while (t && t !== layer) {
+        if (t.className && typeof t.className === 'string' && t.className.indexOf('item') !== -1 && t._m) { return t; }
+        t = t.parentNode;
+    }
+    return null;
+}
+function rebase() {
+    var p = pts[0];
+    gs.sx = p.x; gs.sy = p.y;
+    if (gs.type === 'item') { gs.ox = gs.el._m.x; gs.oy = gs.el._m.y; }
+    else { gs.ox = ph.ox; gs.oy = ph.oy; }
+}
+function startPinch() {
+    gs.pinch = true;
+    gs.d0 = dist(pts[0], pts[1]);
+    gs.base = gs.type === 'item' ? gs.el._m.sc : ph.zoom;
+}
+function gStart(id, x, y, target) {
+    if (pts.length === 0) {
+        var el = findItem(target);
+        if (el) { select(el); gs = { type: 'item', el: el, moved: false, pinch: false }; }
+        else { select(null); gs = { type: 'photo', moved: false, pinch: false }; }
+    }
+    pts.push({ id: id, x: x, y: y });
+    if (!gs) { return; }
+    rebase();
+    if (pts.length === 2) { startPinch(); gs.moved = true; }
+}
+function gMove(id, x, y) {
+    var p = ptGet(id);
+    if (!gs || !p) { return; }
+    p.x = x; p.y = y;
+    if (pts.length >= 2 && gs.pinch) {
+        var k = dist(pts[0], pts[1]) / gs.d0;
+        if (gs.type === 'item') {
+            gs.el._m.sc = clamp(gs.base * k, 0.4, 3);
+            applyTransform(gs.el);
+        } else {
+            ph.zoom = clamp(gs.base * k, 1, 3);
+            $('zoomRange').value = ph.zoom;
+            drawPhoto();
+        }
+        return;
+    }
+    var q = pts[0];
+    var dx = q.x - gs.sx, dy = q.y - gs.sy;
+    if (!gs.moved && Math.sqrt(dx * dx + dy * dy) < 5) { return; }
+    gs.moved = true;
+    var r = cw.getBoundingClientRect();
+    var rw = r.width || 1, rh = r.height || 1;
+    if (gs.type === 'item') {
+        gs.el._m.x = clamp(gs.ox + (dx / rw) * 100, 0, 100);
+        gs.el._m.y = clamp(gs.oy + (dy / rh) * 100, 0, 100);
+        gs.el.style.left = gs.el._m.x + '%';
+        gs.el.style.top = gs.el._m.y + '%';
+    } else {
+        var f = PW / rw;
+        ph.ox = gs.ox + dx * f;
+        ph.oy = gs.oy + dy * f;
+        drawPhoto();
+    }
+}
+function gEnd(id) {
+    if (!ptGet(id)) { return; }
+    ptDel(id);
+    if (pts.length === 0) {
+        if (gs && gs.type === 'item' && !gs.moved) {
+            var now = new Date().getTime();
+            if (lastTap.el === gs.el && now - lastTap.t < 350) { openEdit(gs.el); lastTap = { el: null, t: 0 }; }
+            else { lastTap = { el: gs.el, t: now }; }
+        }
+        gs = null;
+    } else if (gs) {
+        gs.pinch = false;
+        gs.moved = true;
+        rebase();
+        if (pts.length >= 2) { startPinch(); }
+    }
+}
+
+layer.addEventListener('touchstart', function (e) {
+    e.preventDefault();
+    for (var i = 0; i < e.changedTouches.length; i++) {
+        var t = e.changedTouches[i];
+        gStart(t.identifier, t.clientX, t.clientY, e.target);
+    }
+}, false);
+layer.addEventListener('touchmove', function (e) {
+    e.preventDefault();
+    for (var i = 0; i < e.changedTouches.length; i++) {
+        var t = e.changedTouches[i];
+        gMove(t.identifier, t.clientX, t.clientY);
+    }
+}, false);
+function touchEnd(e) {
+    e.preventDefault();
+    for (var i = 0; i < e.changedTouches.length; i++) { gEnd(e.changedTouches[i].identifier); }
+}
+layer.addEventListener('touchend', touchEnd, false);
+layer.addEventListener('touchcancel', touchEnd, false);
+
+var mouseDown = false;
+layer.addEventListener('mousedown', function (e) {
+    mouseDown = true;
+    gStart('m', e.clientX, e.clientY, e.target);
+}, false);
+document.addEventListener('mousemove', function (e) { if (mouseDown) { gMove('m', e.clientX, e.clientY); } }, false);
+document.addEventListener('mouseup', function () { if (mouseDown) { mouseDown = false; gEnd('m'); } }, false);
+
+/* ---------- TOOLS ITEM ---------- */
+function scaleBy(d) {
+    if (!selected) { return; }
+    selected._m.sc = clamp(Math.round((selected._m.sc + d) * 100) / 100, 0.4, 3);
+    applyTransform(selected);
+}
+$('tBigger').onclick = function () { scaleBy(0.1); };
+$('tSmaller').onclick = function () { scaleBy(-0.1); };
+$('tRotate').onclick = function () {
+    if (!selected) { return; }
+    var r = selected._m.rot + 5;
+    if (r > 20) { r = -20; }
+    selected._m.rot = r;
+    applyTransform(selected);
+};
+$('tDelete').onclick = function () {
+    if (selected) { var el = selected; select(null); layer.removeChild(el); }
+};
+$('tEdit').onclick = function () { if (selected) { openEdit(selected); } };
+
+/* ---------- MODAL ---------- */
+function showOverlay(id) { $(id).className = 'overlay show'; }
+function hideOverlay(id) { $(id).className = 'overlay'; }
+function overlayOpen(id) { return $(id).className.indexOf('show') !== -1; }
+
+var editing = null;
+function openEdit(el) {
+    editing = el;
+    $('editText').value = el._m.raw;
+    showOverlay('editModal');
+    setTimeout(function () { try { $('editText').focus(); } catch (e) {} }, 120);
+}
+function closeEdit() { hideOverlay('editModal'); editing = null; }
+$('editCancel').onclick = closeEdit;
+$('editSave').onclick = function () {
+    if (editing) {
+        editing._m.raw = $('editText').value || ' ';
+        renderItem(editing);
+    }
+    closeEdit();
+};
+$('btnHelp').onclick = function () { showOverlay('guideModal'); };
+$('guideOk').onclick = function () { hideOverlay('guideModal'); };
+$('previewClose').onclick = function () { hideOverlay('previewModal'); $('previewImg').src = ''; };
+
+/* =========================================================
+   HARGA & MODEL
+   ========================================================= */
+function getPrice() {
+    var c = layer.childNodes, i;
+    for (i = 0; i < c.length; i++) { if (c[i]._m && c[i]._m.kind === 'price') { return c[i]; } }
+    return null;
+}
+function addPriceBox() {
+    return createItem('price', 'HARGA CUKUP 10RB\nDAPAT 3', D.models[0], { x: 50, y: 55 });
+}
+$('btnPrice').onclick = function () {
+    var p = getPrice();
+    if (p) { select(p); toast('Geser teks harga dengan jari'); }
+    else { addPriceBox(); toast('Kotak harga ditambahkan'); }
+};
+
+function buildTiles(gridId, list, labelKey, onPick, fs) {
+    var grid = $(gridId);
+    if (grid.childNodes.length) { return; }
+    for (var i = 0; i < list.length; i++) {
+        (function (d) {
+            var div = document.createElement('div');
+            div.className = 'tile';
+            div.textContent = d[labelKey];
+            var st = normStyle(d);
+            if (!st.g) { st.g = ['#8d86a8', '#5f5978']; }
+            applyBoxCss(div, st);
+            div.style.fontSize = (fs || 12) + 'px';
+            div.onclick = function () { onPick(d); };
+            grid.appendChild(div);
+        })(list[i]);
+    }
+}
+
+$('btnModel').onclick = function () {
+    buildTiles('modelGrid', D.models, 'n', function (d) {
+        var p = (selected && selected._m.kind === 'price') ? selected : getPrice();
+        if (!p) { p = addPriceBox(); }
+        p._m.style = normStyle(d);
+        p._m.rot = d.rot || 0;
+        renderItem(p);
+        select(p);
+        closePanel();
+    });
+    openPanel('modelPanel');
+};
+
+/* =========================================================
+   STIKER & LINK
+   ========================================================= */
+function addSticker(d, y) {
+    createItem('sticker', d.t, d, { rot: d.rot || 0, fs: 14, x: 50, y: y });
+    stickerCount++;
+}
+$('btnSticker').onclick = function () {
+    buildTiles('stickerGrid', D.stickers, 't', function (d) {
+        addSticker(d, 25 + ((stickerCount * 7) % 35));
+        closePanel();
+    });
+    openPanel('stickerPanel');
+};
+$('btnLink').onclick = function () {
+    buildTiles('linkGrid', D.links, 't', function (d) {
+        addSticker(d, 25 + ((stickerCount * 7) % 35));
+        closePanel();
+    });
+    openPanel('linkPanel');
+};
+$('btnCustomLink').onclick = function () {
+    var txt = $('customLinkText').value.replace(/^\s+|\s+$/g, '');
+    if (!txt) { toast('Ketik teks dulu'); return; }
+    createItem('sticker', txt, D.links[0], { fs: 14, x: 50, y: 85 });
+    $('customLinkText').value = '';
+    try { $('customLinkText').blur(); } catch (e) {}
+    closePanel();
+};
+
+/* =========================================================
+   PANEL
+   ========================================================= */
+var panelIds = ['photoPanel', 'stickerPanel', 'linkPanel', 'modelPanel'];
+function openPanel(id) {
+    for (var i = 0; i < panelIds.length; i++) {
+        $(panelIds[i]).className = 'panel' + (panelIds[i] === id ? ' open' : '');
+    }
+    openId = id;
+    layout();
+}
+function closePanel() {
+    for (var i = 0; i < panelIds.length; i++) { $(panelIds[i]).className = 'panel'; }
+    openId = null;
+    try { $('customLinkText').blur(); } catch (e) {}
+    layout();
+}
+var closers = document.querySelectorAll('[data-close]'), ci;
+for (ci = 0; ci < closers.length; ci++) { closers[ci].onclick = closePanel; }
+
+/* =========================================================
+   SIMPAN & BAGIKAN (digambar manual ke kanvas, tanpa library)
+   ========================================================= */
+function rrPath(g, x, y, w, h, r) {
+    var lim = Math.min(w, h) / 2;
+    var tl = Math.min(r[0], lim), tr = Math.min(r[1], lim), br = Math.min(r[2], lim), bl = Math.min(r[3], lim);
+    g.beginPath();
+    g.moveTo(x + tl, y);
+    g.lineTo(x + w - tr, y);
+    g.arcTo(x + w, y, x + w, y + tr, tr);
+    g.lineTo(x + w, y + h - br);
+    g.arcTo(x + w, y + h, x + w - br, y + h, br);
+    g.lineTo(x + bl, y + h);
+    g.arcTo(x, y + h, x, y + h - bl, bl);
+    g.lineTo(x, y + tl);
+    g.arcTo(x, y, x + tl, y, tl);
+    g.closePath();
+}
+
+function drawItem(g, m, k) {
+    var st = m.style, w = m.w, h = m.h, s = m.sc * k;
+    var th = m.rot * Math.PI / 180, cs = Math.cos(th), sn = Math.sin(th);
+    g.save();
+    g.translate(m.x / 100 * PW, m.y / 100 * PH);
+    g.rotate(th);
+    g.scale(s, s);
+
+    var x0 = -w / 2, y0 = -h / 2;
+    if (st.g) {
+        var len = (w + h) / Math.SQRT2, d = len / 2 * Math.SQRT1_2;
+        var gr = g.createLinearGradient(-d, -d, d, d);
+        gr.addColorStop(0, st.g[0]); gr.addColorStop(1, st.g[1]);
+        if (st.sh) {
+            g.shadowColor = st.sh[3];
+            g.shadowOffsetX = (st.sh[0] * cs - st.sh[1] * sn) * s;
+            g.shadowOffsetY = (st.sh[0] * sn + st.sh[1] * cs) * s;
+            g.shadowBlur = st.sh[2] * s;
+        }
+        g.fillStyle = gr;
+        rrPath(g, x0, y0, w, h, st.r);
+        g.fill();
+        g.shadowColor = 'rgba(0,0,0,0)'; g.shadowBlur = 0; g.shadowOffsetX = 0; g.shadowOffsetY = 0;
+    }
+    if (st.bw) {
+        var hb = st.bw / 2;
+        var ri = [Math.max(0, st.r[0] - hb), Math.max(0, st.r[1] - hb), Math.max(0, st.r[2] - hb), Math.max(0, st.r[3] - hb)];
+        g.lineWidth = st.bw;
+        g.strokeStyle = st.bc;
+        rrPath(g, x0 + hb, y0 + hb, w - st.bw, h - st.bw, ri);
+        g.stroke();
+    }
+    g.font = fontStr(m.fs);
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    var i, ty;
+    for (i = 0; i < m.lines.length; i++) {
+        ty = y0 + st.bw + m.padY + m.lh * (i + 0.5);
+        if (st.st) {
+            g.lineJoin = 'round';
+            g.lineWidth = 4;
+            g.strokeStyle = st.st;
+            g.strokeText(m.lines[i], 0, ty);
+        }
+        g.fillStyle = st.c;
+        g.fillText(m.lines[i], 0, ty);
+    }
+    g.restore();
+}
+
+function renderOutput() {
+    var out = document.createElement('canvas');
+    out.width = PW; out.height = PH;
+    var g = out.getContext('2d');
+    g.fillStyle = '#ffffff';
+    g.fillRect(0, 0, PW, PH);
+    g.drawImage(pc, 0, 0);
+    var k = PW / DW, c = layer.childNodes, i, pass;
+    for (pass = 0; pass < 2; pass++) {              /* harga dulu, stiker di atasnya */
+        var want = pass === 0 ? 'price' : 'sticker';
+        for (i = 0; i < c.length; i++) {
+            if (c[i]._m && c[i]._m.kind === want) { drawItem(g, c[i]._m, k); }
+        }
+    }
+    return out;
+}
+
+function makeOutput(cb) {
+    select(null);
+    toast('Memproses gambar...');
+    setTimeout(function () {
+        try { cb(renderOutput()); }
+        catch (err) { toast('Gagal memproses gambar'); throw err; }
+    }, 60);
+}
+function toB64(canvas) { return canvas.toDataURL('image/png').split(',')[1]; }
+function showPreview(canvas) {
+    $('previewImg').src = canvas.toDataURL('image/png');
+    showOverlay('previewModal');
+}
+
+$('btnSave').onclick = function () {
+    makeOutput(function (canvas) {
+        if (hasBridge('saveImage')) {
+            window.AndroidBridge.saveImage(toB64(canvas));
+            toast('Menyimpan gambar...');
+        } else {
+            /* fallback browser biasa */
+            try {
+                var a = document.createElement('a');
+                a.href = canvas.toDataURL('image/png');
+                a.download = 'promo-wa.png';
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            } catch (e) {}
+            showPreview(canvas);
+        }
+    });
+};
+$('btnShare').onclick = function () {
+    makeOutput(function (canvas) {
+        if (hasBridge('shareImage')) {
+            window.AndroidBridge.shareImage(toB64(canvas), 'Promo spesial untukmu!');
+        } else {
+            showPreview(canvas);
+            toast('Share tidak tersedia di browser, simpan gambar manual');
+        }
+    });
+};
+
+/* =========================================================
+   TOMBOL BACK ANDROID
+   ========================================================= */
+window.androidBack = function () {
+    if (overlayOpen('previewModal')) { $('previewClose').onclick(); return true; }
+    if (overlayOpen('editModal')) { closeEdit(); return true; }
+    if (overlayOpen('guideModal')) { hideOverlay('guideModal'); return true; }
+    if (openId) { closePanel(); return true; }
+    if (selected) { select(null); return true; }
+    return false;
+};
+
+/* =========================================================
+   AWAL
+   ========================================================= */
+makePlaceholder();
+addPriceBox();
+select(null);
+layout();
+setTimeout(layout, 200);
+
+setTimeout(function () {
+    var s = $('splash');
+    if (s) { s.style.display = 'none'; }
+    if (!load('fp_guide_seen')) {
+        showOverlay('guideModal');
+        store('fp_guide_seen', '1');
+    }
+}, 250);
+
+})();
+</script>
+</body>
+</html>

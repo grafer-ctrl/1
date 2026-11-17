@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Blast Personal</title>
+<script>
+/* Penangkap error global: tampil di layar, tidak pernah blank tanpa pesan */
+window.onerror = function (msg, url, line) {
+    var b = document.getElementById('error-box');
+    if (b) {
+        b.style.display = 'block';
+        b.innerHTML += '<div>[Error] ' + String(msg) + ' (baris ' + line + ')</div>';
+    }
+    return true;
+};
+</script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+html, body { position: fixed; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; background: #1e1b4b; font-family: Roboto, sans-serif; color: #1e293b; }
+input, textarea { -webkit-user-select: text; user-select: text; font-family: Roboto, sans-serif; font-size: 15px; }
+button { font-family: Roboto, sans-serif; border: none; cursor: pointer; outline: none; }
+
+#splash { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; font-size: 18px; font-weight: bold; background: linear-gradient(135deg, #34d399, #0d9488); transition: opacity .3s; }
+#error-box { display: none; position: fixed; top: 8px; left: 8px; right: 8px; z-index: 100000; max-height: 200px; overflow-y: auto; padding: 12px; border-radius: 10px; font-size: 13px; color: #fff; background: #dc2626; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+
+.app { position: absolute; top: 0; left: 0; right: 0; bottom: 0; max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; background: #f5f3ff; padding-top: 0; padding-top: constant(safe-area-inset-top); padding-top: env(safe-area-inset-top, 0px); padding-bottom: 0; padding-bottom: constant(safe-area-inset-bottom); padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+header { flex-shrink: 0; padding: 12px 16px; color: #fff; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #34d399, #0d9488); box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+header h1 { font-size: 19px; font-weight: 700; }
+header p { font-size: 12px; opacity: .92; margin-top: 2px; }
+.counter { min-width: 64px; text-align: center; padding: 6px 12px; border-radius: 16px; font-size: 13px; font-weight: bold; background: rgba(255,255,255,.25); }
+
+.content { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: 14px 14px 18px; }
+
+.card { border-radius: 16px; padding: 12px; margin-bottom: 12px; box-shadow: 0 3px 8px rgba(0,0,0,.07); }
+.card-msg { background: linear-gradient(135deg, #f5f3ff, #ddd6fe); border: 2px solid #a78bfa; }
+.card-add { background: linear-gradient(135deg, #ecfeff, #a5f3fc); border: 1px solid #22d3ee; }
+.card-title { font-size: 14px; font-weight: bold; margin-bottom: 8px; }
+.card-msg .card-title { color: #6d28d9; }
+.card-add .card-title { color: #0e7490; }
+
+textarea#msg { display: block; width: 100%; height: 110px; padding: 10px; border: 1px solid #c4b5fd; border-radius: 10px; background: #fff; color: #4c1d95; line-height: 1.4; resize: none; outline: none; }
+textarea#msg:focus { border-color: #8b5cf6; }
+
+.chips { display: flex; flex-wrap: wrap; margin-top: 8px; }
+.chip { height: 38px; padding: 0 14px; margin: 0 8px 0 0; border-radius: 19px; font-size: 13px; font-weight: bold; color: #fff; background: linear-gradient(135deg, #f472b6, #db2777); }
+.chip:active, .btn:active, .tbtn:active { opacity: .85; }
+
+.row { display: flex; align-items: stretch; }
+.fields { flex: 1; min-width: 0; }
+.inp { display: block; width: 100%; height: 44px; padding: 0 12px; border: 1px solid #94a3b8; border-radius: 10px; background: #fff; color: #334155; outline: none; margin-bottom: 8px; }
+.fields .inp:last-child { margin-bottom: 0; }
+.inp:focus { border-color: #06b6d4; }
+.btn-add { flex-shrink: 0; width: 52px; margin-left: 8px; border-radius: 12px; font-size: 28px; font-weight: bold; color: #fff; background: linear-gradient(135deg, #60a5fa, #2563eb); box-shadow: 0 3px 6px rgba(37,99,235,.3); }
+
+.list-head { display: flex; align-items: center; justify-content: space-between; margin: 4px 2px 8px; font-size: 14px; font-weight: bold; color: #9a3412; }
+.empty { padding: 22px 12px; text-align: center; font-size: 14px; color: #7c3aed; background: #ede9fe; border-radius: 12px; }
+
+.contact { border-radius: 14px; padding: 10px; margin-bottom: 10px; background: linear-gradient(135deg, #fff, #f8fafc); border: 1px solid #e2e8f0; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+.c-top { display: flex; align-items: center; margin-bottom: 10px; }
+.avatar { flex-shrink: 0; width: 42px; height: 42px; border-radius: 21px; margin-right: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; color: #fff; }
+.c-info { flex: 1; min-width: 0; }
+.c-name { font-size: 15px; font-weight: bold; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.c-phone { font-size: 13px; color: #64748b; margin-top: 2px; }
+.badge { flex-shrink: 0; margin-left: 8px; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; color: #065f46; background: linear-gradient(135deg, #d1fae5, #6ee7b7); }
+.c-actions { display: flex; }
+.btn { height: 44px; border-radius: 10px; font-size: 14px; font-weight: bold; color: #fff; }
+.btn-send { flex: 1; background: linear-gradient(135deg, #34d399, #059669); }
+.btn-edit, .btn-del { width: 64px; margin-left: 8px; height: 44px; }
+.btn-edit { background: linear-gradient(135deg, #fbbf24, #d97706); }
+.btn-del { background: linear-gradient(135deg, #f87171, #dc2626); }
+
+.toolbar { flex-shrink: 0; display: flex; padding: 8px 10px; background: #fff; border-bottom: 1px solid #e2e8f0; box-shadow: 0 2px 6px rgba(0,0,0,.06); }
+.tbtn { flex: 1; height: 46px; margin: 0 4px; border-radius: 12px; font-size: 13px; font-weight: bold; color: #fff; }
+.t1 { background: linear-gradient(135deg, #a78bfa, #7c3aed); }
+.t2 { background: linear-gradient(135deg, #60a5fa, #2563eb); }
+.t3 { background: linear-gradient(135deg, #fb923c, #ea580c); }
+.app.kb .toolbar { padding: 4px 10px; }
+.app.kb .tbtn { height: 40px; }
+
+.overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 10000; display: none; align-items: center; justify-content: center; background: rgba(15,23,42,.55); }
+.overlay.active { display: flex; }
+.modal { width: 90%; max-width: 380px; max-height: 80%; display: flex; flex-direction: column; padding: 16px; border-radius: 16px; background: #fff; box-shadow: 0 10px 25px rgba(0,0,0,.25); }
+.m-title { flex-shrink: 0; margin-bottom: 12px; font-size: 16px; font-weight: bold; color: #6d28d9; }
+.m-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.m-btns { flex-shrink: 0; display: flex; justify-content: flex-end; margin-top: 14px; }
+.mbtn { min-width: 84px; height: 44px; margin-left: 8px; padding: 0 16px; border-radius: 10px; font-size: 14px; font-weight: bold; }
+.mbtn-cancel { color: #475569; background: #e2e8f0; }
+.mbtn-ok { color: #fff; background: linear-gradient(135deg, #34d399, #059669); }
+
+.tmpl { display: flex; align-items: stretch; margin-bottom: 8px; border-radius: 12px; border: 1px solid #ddd6fe; background: linear-gradient(135deg, #faf5ff, #ede9fe); }
+.tmpl-main { flex: 1; min-width: 0; padding: 10px; }
+.tmpl-title { font-size: 14px; font-weight: bold; color: #5b21b6; margin-bottom: 3px; }
+.tmpl-prev { font-size: 12px; color: #475569; line-height: 1.35; max-height: 33px; overflow: hidden; }
+.tmpl-del { flex-shrink: 0; width: 44px; border-radius: 0 12px 12px 0; font-size: 16px; color: #fff; background: linear-gradient(135deg, #f87171, #dc2626); }
+
+#toast { position: fixed; left: 50%; bottom: 24px; z-index: 100001; max-width: 90%; padding: 10px 20px; border-radius: 20px; font-size: 13px; text-align: center; color: #fff; background: #1e293b; box-shadow: 0 4px 12px rgba(0,0,0,.25); opacity: 0; -webkit-transform: translateX(-50%); transform: translateX(-50%); pointer-events: none; transition: opacity .25s; }
+#toast.show { opacity: 1; }
+
+@media (min-width: 430px) { .btn-edit, .btn-del { width: 72px; } }
+</style>
+</head>
+<body>
+<div id="splash">Memuat…</div>
+<div id="error-box" onclick="this.style.display='none'"></div>
+
+<div class="app" id="app">
+    <header>
+        <div>
+            <h1>Blast Personal</h1>
+            <p>Kirim pesan satu per satu</p>
+        </div>
+        <div class="counter" id="counter">0/0</div>
+    </header>
+
+    <div class="toolbar" id="toolbar">
+        <button class="tbtn t1" id="tb-template" type="button">Template</button>
+        <button class="tbtn t2" id="tb-save" type="button">Simpan template</button>
+        <button class="tbtn t3" id="tb-reset" type="button">Reset status</button>
+    </div>
+
+    <div class="content" id="content">
+        <div class="card card-msg">
+            <div class="card-title">Teks pesan</div>
+            <textarea id="msg" placeholder="Tulis pesan di sini. Pakai [Nama] untuk menyapa tiap kontak."></textarea>
+            <div class="chips">
+                <button class="chip" id="chip-nama" type="button">+ [Nama]</button>
+            </div>
+        </div>
+
+        <div class="card card-add">
+            <div class="card-title">Tambah kontak</div>
+            <div class="row">
+                <div class="fields">
+                    <input type="text" id="in-name" class="inp" placeholder="Nama">
+                    <input type="tel" id="in-phone" class="inp" placeholder="Nomor WA, contoh 0812xxxx">
+                </div>
+                <button class="btn-add" id="btn-add" type="button">+</button>
+            </div>
+        </div>
+
+        <div class="list-head"><span>Daftar kontak</span></div>
+        <div id="list"></div>
+    </div>
+</div>
+
+<!-- Modal: pilih template -->
+<div class="overlay" id="m-template">
+    <div class="modal">
+        <div class="m-title">Pilih template</div>
+        <div class="m-body" id="tmpl-list"></div>
+        <div class="m-btns"><button class="mbtn mbtn-cancel" id="mt-close" type="button">Tutup</button></div>
+    </div>
+</div>
+
+<!-- Modal: edit kontak -->
+<div class="overlay" id="m-edit">
+    <div class="modal">
+        <div class="m-title">Edit kontak</div>
+        <div class="m-body">
+            <input type="text" id="ed-name" class="inp" placeholder="Nama">
+            <input type="tel" id="ed-phone" class="inp" placeholder="Nomor WA">
+        </div>
+        <div class="m-btns">
+            <button class="mbtn mbtn-cancel" id="me-cancel" type="button">Batal</button>
+            <button class="mbtn mbtn-ok" id="me-ok" type="button">Simpan</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: nama template baru -->
+<div class="overlay" id="m-name">
+    <div class="modal">
+        <div class="m-title">Simpan sebagai template</div>
+        <div class="m-body">
+            <input type="text" id="tn-name" class="inp" placeholder="Nama template">
+        </div>
+        <div class="m-btns">
+            <button class="mbtn mbtn-cancel" id="mn-cancel" type="button">Batal</button>
+            <button class="mbtn mbtn-ok" id="mn-ok" type="button">Simpan</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- BLOK DATA -->
+<script>
+window.BP_DATA = {
+    contacts: [
+        { id: 'c1', name: 'Umar', phone: '081575651312', sent: false },
+        { id: 'c2', name: 'John', phone: '085225644101', sent: false },
+        { id: 'c3', name: 'Dalton', phone: '08156765432', sent: false }
+    ],
+    templates: [
+        { title: 'Promo singkat', text: 'Halo Kak [Nama]! Dapatkan diskon khusus untuk produk favoritmu.\nPromo hanya berlaku hari ini! Amankan promomu sekarang:\n👉 [Link Website/Katalog]' },
+        { title: 'Produk baru', text: 'Halo Kak [Nama]! Produk terbaru kami resmi rilis hari ini.\nDapatkan harga perdana khusus / gratis ongkir untuk 50 pembeli pertama di sini:\n👉 [Link Produk]' },
+        { title: 'Undangan rapat warga', text: 'UNDANGAN RAPAT RT/RW\nYth. Bapak/Ibu [Nama]\nKami mengundang kehadiran Bapak/Ibu untuk menghadiri rapat warga pada:\n🗓️ Hari/Tanggal: [Hari, Tanggal]\n⏰ Waktu: Pukul [19.30] WIB - Selesai\n📍 Tempat: [Lokasi]\nTerima kasih.' }
+    ],
+    palette: [
+        ['#f472b6', '#db2777'], ['#fb923c', '#ea580c'], ['#fbbf24', '#d97706'],
+        ['#34d399', '#059669'], ['#22d3ee', '#0891b2'], ['#60a5fa', '#2563eb'],
+        ['#a78bfa', '#7c3aed'], ['#f87171', '#dc2626']
+    ]
+};
+</script>
+
+<!-- BLOK LOGIKA -->
+<script>
+(function () {
+    var D = window.BP_DATA;
+    var K_CONTACTS = 'blast_personal_contacts_v3';
+    var K_TEXT = 'blast_personal_msg_v3';
+    var K_TMPL = 'blast_personal_tmpl_v3';
+
+    var contacts = D.contacts.slice();
+    var customTemplates = [];
+    var editId = null;
+    var toastTimer = null;
+    var maxH = window.innerHeight;
+
+    function el(id) { return document.getElementById(id); }
+
+    /* ---------- Penyimpanan (aman bila gagal) ---------- */
+    function load() {
+        try {
+            var c = localStorage.getItem(K_CONTACTS);
+            if (c) { contacts = JSON.parse(c); }
+            var t = localStorage.getItem(K_TMPL);
+            if (t) { customTemplates = JSON.parse(t); }
+            var m = localStorage.getItem(K_TEXT);
+            if (m !== null && m !== '') { el('msg').value = m; return; }
+        } catch (e) {}
+        el('msg').value = D.templates[0].text;
+    }
+    function save() {
+        try {
+            localStorage.setItem(K_CONTACTS, JSON.stringify(contacts));
+            localStorage.setItem(K_TEXT, el('msg').value);
+            localStorage.setItem(K_TMPL, JSON.stringify(customTemplates));
+        } catch (e) {}
+    }
+
+    /* ---------- Toast ---------- */
+    function toast(text) {
+        var t = el('toast');
+        t.textContent = text;
+        t.className = 'show';
+        if (toastTimer) { clearTimeout(toastTimer); }
+        toastTimer = setTimeout(function () { t.className = ''; }, 2400);
+    }
+
+    /* ---------- Modal ---------- */
+    function openModal(id) { el(id).className = 'overlay active'; }
+    function closeModal(id) { el(id).className = 'overlay'; }
+    function anyModalOpen() {
+        var ids = ['m-template', 'm-edit', 'm-name'];
+        for (var i = 0; i < ids.length; i++) {
+            if (el(ids[i]).className.indexOf('active') !== -1) { return ids[i]; }
+        }
+        return null;
+    }
+
+    /* ---------- Nomor & pesan ---------- */
+    function normalizePhone(raw) {
+        var p = String(raw).replace(/\D/g, '');
+        if (p.indexOf('00') === 0) { p = p.substring(2); }
+        if (p.charAt(0) === '0') { p = '62' + p.substring(1); }
+        else if (p.charAt(0) === '8') { p = '62' + p; }
+        return p;
+    }
+    function buildText(name) {
+        return el('msg').value.replace(/\[nama\]|\{nama\}/gi, name);
+    }
+
+    /* ---------- Kirim Chat ---------- */
+    function openWhatsApp(phone, text) {
+        var enc = encodeURIComponent(text);
+        var web = 'https://wa.me/' + phone + '?text=' + enc;
+        var b = window.AndroidBridge;
+        try {
+            if (b && typeof b.openWhatsApp === 'function') { b.openWhatsApp(phone, text); return; }
+            if (b && typeof b.openUrl === 'function') { b.openUrl(web); return; }
+        } catch (e) {}
+        if (/Android/i.test(navigator.userAgent)) {
+            window.location.href = 'whatsapp://send?phone=' + phone + '&text=' + enc;
+        } else {
+            window.location.href = web;
+        }
+    }
+
+    function sendTo(id) {
+        var c = findContact(id);
+        if (!c) { return; }
+        if (!el('msg').value.replace(/\s/g, '')) { toast('Teks pesan masih kosong'); return; }
+        var phone = normalizePhone(c.phone);
+        if (phone.length < 9) { toast('Nomor ' + c.name + ' tidak valid'); return; }
+        c.sent = true;
+        save();
+        render();
+        toast('Membuka WhatsApp untuk ' + c.name);
+        openWhatsApp(phone, buildText(c.name));
+    }
+
+    /* ---------- Kontak ---------- */
+    function findContact(id) {
+        for (var i = 0; i < contacts.length; i++) { if (contacts[i].id === id) { return contacts[i]; } }
+        return null;
+    }
+    function newId() { return 'c' + new Date().getTime() + Math.floor(Math.random() * 1000); }
+
+    function addContact() {
+        var n = el('in-name').value.replace(/^\s+|\s+$/g, '');
+        var p = el('in-phone').value.replace(/^\s+|\s+$/g, '');
+        if (!n || !p) { toast('Nama dan nomor wajib diisi'); return; }
+        contacts.push({ id: newId(), name: n, phone: p, sent: false });
+        el('in-name').value = '';
+        el('in-phone').value = '';
+        save();
+        render();
+        toast('Kontak ditambahkan');
+    }
+    function deleteContact(id) {
+        for (var i = 0; i < contacts.length; i++) {
+            if (contacts[i].id === id) { contacts.splice(i, 1); break; }
+        }
+        save();
+        render();
+        toast('Kontak dihapus');
+    }
+    function openEdit(id) {
+        var c = findContact(id);
+        if (!c) { return; }
+        editId = id;
+        el('ed-name').value = c.name;
+        el('ed-phone').value = c.phone;
+        openModal('m-edit');
+    }
+    function saveEdit() {
+        var c = findContact(editId);
+        var n = el('ed-name').value.replace(/^\s+|\s+$/g, '');
+        var p = el('ed-phone').value.replace(/^\s+|\s+$/g, '');
+        if (!n || !p) { toast('Nama dan nomor tidak boleh kosong'); return; }
+        if (c) { c.name = n; c.phone = p; c.sent = false; }
+        save();
+        render();
+        closeModal('m-edit');
+        toast('Kontak diperbarui');
+    }
+    function resetStatus() {
+        for (var i = 0; i < contacts.length; i++) { contacts[i].sent = false; }
+        save();
+        render();
+        toast('Status terkirim direset');
+    }
+
+    function render() {
+        var list = el('list');
+        list.innerHTML = '';
+        var sentCount = 0;
+        if (!contacts.length) {
+            var em = document.createElement('div');
+            em.className = 'empty';
+            em.textContent = 'Belum ada kontak. Isi nama dan nomor di atas, lalu tekan +.';
+            list.appendChild(em);
+        }
+        for (var i = 0; i < contacts.length; i++) {
+            (function (c, idx) {
+                if (c.sent) { sentCount++; }
+                var pal = D.palette[idx % D.palette.length];
+                var card = document.createElement('div');
+                card.className = 'contact';
+
+                var top = document.createElement('div');
+                top.className = 'c-top';
+                var av = document.createElement('div');
+                av.className = 'avatar';
+                av.style.background = 'linear-gradient(135deg, ' + pal[0] + ', ' + pal[1] + ')';
+                av.textContent = (c.name.charAt(0) || '?').toUpperCase();
+                var info = document.createElement('div');
+                info.className = 'c-info';
+                var nm = document.createElement('div');
+                nm.className = 'c-name';
+                nm.textContent = c.name;
+                var ph = document.createElement('div');
+                ph.className = 'c-phone';
+                ph.textContent = c.phone;
+                info.appendChild(nm);
+                info.appendChild(ph);
+                top.appendChild(av);
+                top.appendChild(info);
+                if (c.sent) {
+                    var bd = document.createElement('div');
+                    bd.className = 'badge';
+                    bd.textContent = 'Terkirim';
+                    top.appendChild(bd);
+                }
+
+                var act = document.createElement('div');
+                act.className = 'c-actions';
+                var bs = document.createElement('button');
+                bs.className = 'btn btn-send';
+                bs.type = 'button';
+                bs.textContent = c.sent ? 'Kirim lagi' : 'Kirim Pesan';
+                bs.onclick = function () { sendTo(c.id); };
+                var be = document.createElement('button');
+                be.className = 'btn btn-edit';
+                be.type = 'button';
+                be.textContent = 'Edit';
+                be.onclick = function () { openEdit(c.id); };
+                var bx = document.createElement('button');
+                bx.className = 'btn btn-del';
+                bx.type = 'button';
+                bx.textContent = 'Hapus';
+                bx.onclick = function () { deleteContact(c.id); };
+                act.appendChild(bs);
+                act.appendChild(be);
+                act.appendChild(bx);
+
+                card.appendChild(top);
+                card.appendChild(act);
+                list.appendChild(card);
+            })(contacts[i], i);
+        }
+        el('counter').textContent = sentCount + '/' + contacts.length;
+    }
+
+    /* ---------- Template ---------- */
+    function renderTemplates() {
+        var box = el('tmpl-list');
+        box.innerHTML = '';
+        var all = D.templates.concat(customTemplates);
+        for (var i = 0; i < all.length; i++) {
+            (function (t, isCustom, cIdx) {
+                var row = document.createElement('div');
+                row.className = 'tmpl';
+                var main = document.createElement('div');
+                main.className = 'tmpl-main';
+                var ti = document.createElement('div');
+                ti.className = 'tmpl-title';
+                ti.textContent = t.title;
+                var pv = document.createElement('div');
+                pv.className = 'tmpl-prev';
+                pv.textContent = t.text;
+                main.appendChild(ti);
+                main.appendChild(pv);
+                main.onclick = function () {
+                    el('msg').value = t.text;
+                    save();
+                    closeModal('m-template');
+                    toast('Template dimuat');
+                };
+                row.appendChild(main);
+                if (isCustom) {
+                    var del = document.createElement('button');
+                    del.className = 'tmpl-del';
+                    del.type = 'button';
+                    del.textContent = '✕';
+                    del.onclick = function () {
+                        customTemplates.splice(cIdx, 1);
+                        save();
+                        renderTemplates();
+                        toast('Template dihapus');
+                    };
+                    row.appendChild(del);
+                }
+                box.appendChild(row);
+            })(all[i], i >= D.templates.length, i - D.templates.length);
+        }
+    }
+    function askTemplateName() {
+        if (!el('msg').value.replace(/\s/g, '')) { toast('Teks pesan masih kosong'); return; }
+        el('tn-name').value = 'Template saya ' + (customTemplates.length + 1);
+        openModal('m-name');
+    }
+    function saveTemplate() {
+        var n = el('tn-name').value.replace(/^\s+|\s+$/g, '');
+        if (!n) { toast('Nama template wajib diisi'); return; }
+        customTemplates.push({ title: n, text: el('msg').value });
+        save();
+        closeModal('m-name');
+        toast('Template disimpan');
+    }
+    function insertNama() {
+        var ta = el('msg');
+        var tag = '[Nama]';
+        var s = ta.value.length, e = s;
+        try {
+            if (typeof ta.selectionStart === 'number') { s = ta.selectionStart; e = ta.selectionEnd; }
+        } catch (x) {}
+        ta.value = ta.value.substring(0, s) + tag + ta.value.substring(e);
+        try { ta.focus(); ta.setSelectionRange(s + tag.length, s + tag.length); } catch (y) {}
+        save();
+    }
+
+    /* ---------- Ukuran layar & keyboard ---------- */
+    function fit() {
+        var h = window.innerHeight;
+        if (h > maxH) { maxH = h; }
+        var kb = (maxH - h) > 120;
+        el('app').className = kb ? 'app kb' : 'app';
+        var th = kb ? 70 : Math.max(90, Math.min(150, Math.floor(h * 0.18)));
+        el('msg').style.height = th + 'px';
+    }
+    function keepVisible(e) {
+        var t = e.target;
+        setTimeout(function () {
+            try { t.scrollIntoView(false); } catch (x) {}
+        }, 300);
+    }
+
+    /* ---------- Tombol Back dari Android ---------- */
+    window.androidBack = function () {
+        var m = anyModalOpen();
+        if (m) { closeModal(m); return true; }
+        return false;
+    };
+    window.onPhotosPicked = function () {};
+
+    /* ---------- Inisialisasi ---------- */
+    function init() {
+        load();
+        render();
+        fit();
+
+        el('btn-add').onclick = addContact;
+        el('chip-nama').onclick = insertNama;
+        el('tb-template').onclick = function () { renderTemplates(); openModal('m-template'); };
+        el('tb-save').onclick = askTemplateName;
+        el('tb-reset').onclick = resetStatus;
+        el('mt-close').onclick = function () { closeModal('m-template'); };
+        el('me-cancel').onclick = function () { closeModal('m-edit'); };
+        el('me-ok').onclick = saveEdit;
+        el('mn-cancel').onclick = function () { closeModal('m-name'); };
+        el('mn-ok').onclick = saveTemplate;
+        el('msg').oninput = save;
+
+        var fields = ['msg', 'in-name', 'in-phone', 'ed-name', 'ed-phone', 'tn-name'];
+        for (var i = 0; i < fields.length; i++) { el(fields[i]).addEventListener('focus', keepVisible, false); }
+        window.addEventListener('resize', fit, false);
+
+        var sp = el('splash');
+        sp.style.opacity = '0';
+        setTimeout(function () { sp.style.display = 'none'; }, 320);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init, false);
+    } else {
+        init();
+    }
+})();
+</script>
+</body>
+</html>

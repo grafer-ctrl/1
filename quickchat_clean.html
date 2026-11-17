@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>QuickChat</title>
+<meta name="theme-color" content="#14b8a6">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+input,textarea{-webkit-user-select:text;user-select:text}
+html,body{height:100%}
+body{position:fixed;top:0;left:0;right:0;bottom:0;overflow:hidden;font-family:Roboto,sans-serif;color:#1f2937;background:#e9eefb;background:linear-gradient(160deg,#e0f2fe,#ede9fe 50%,#fce7f3)}
+button{font-family:inherit;border:0;background:none;color:inherit;cursor:pointer}
+input{font-family:inherit;font-size:15px}
+.mono{font-family:monospace}
+.app{position:relative;padding-bottom:constant(safe-area-inset-bottom);padding-bottom:env(safe-area-inset-bottom);height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;background:#f8fafc;overflow:hidden}
+.header{flex:0 0 auto;padding:10px 14px 12px;padding-top:calc(10px + constant(safe-area-inset-top));padding-top:calc(10px + env(safe-area-inset-top));display:flex;justify-content:space-between;align-items:center;color:#fff;background:#14b8a6;background:linear-gradient(120deg,#34d399,#06b6d4 55%,#6366f1)}
+.logo-wrap{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.logo{width:40px;height:40px;min-width:40px;border-radius:14px;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:20px}
+.header h1{font-size:18px;line-height:1.2}
+.header p{font-size:11px;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hbtns{display:flex;gap:4px;margin-left:8px}
+.hbtn{width:38px;height:38px;min-width:38px;border-radius:12px;background:rgba(255,255,255,.2);font-size:16px}
+.hbtn.on{background:rgba(255,255,255,.55)}
+.offline-bar{display:none;flex:0 0 auto;background:#fef3c7;color:#92400e;font-size:12px;text-align:center;padding:6px}
+.offline-bar.show{display:block}
+.content{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.view{display:none;padding:14px}
+.view.active{display:block}
+.banner{border-radius:18px;padding:14px;margin-bottom:14px;background:#e0f2fe;background:linear-gradient(135deg,#dbeafe,#ede9fe 55%,#fce7f3);border:1px solid #e0e7ff}
+.badge{display:inline-block;font-size:11px;font-weight:700;color:#fff;padding:4px 10px;border-radius:12px;margin-bottom:8px;background:#8b5cf6;background:linear-gradient(135deg,#a78bfa,#7c3aed)}
+.status{font-size:13px;font-weight:700;color:#374151}
+.banner-input{display:flex;gap:8px;margin-top:10px}
+.banner-input input{flex:1;min-width:0;height:46px;padding:0 12px;border:2px solid #fff;border-radius:14px;outline:0;background:#fff}
+.banner-input input:focus{border-color:#a78bfa}
+.btn-add{min-width:92px;height:46px;padding:0 14px;border-radius:14px;color:#fff;font-size:14px;font-weight:700;background:#f97316;background:linear-gradient(135deg,#fdba74,#f97316 60%,#ec4899)}
+.hint{font-size:11px;margin-top:8px;color:#6b7280}
+.chips{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:2px 0 10px}
+.chip{flex:0 0 auto;height:38px;padding:0 14px;border-radius:19px;font-size:13px;font-weight:700;color:#4b5563;background:#fff;border:2px solid #e5e7eb}
+.chip.on{color:#fff;border-color:transparent}
+.grid-head{display:flex;justify-content:space-between;align-items:center;margin:2px 0 8px}
+.grid-head h2{font-size:14px;color:#374151}
+.count{font-size:12px;font-weight:700;color:#fff;padding:3px 10px;border-radius:12px;background:#06b6d4;background:linear-gradient(135deg,#67e8f9,#0891b2)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (min-width:430px){.grid{grid-template-columns:1fr 1fr 1fr}}
+.card{position:relative;background:#fff;border-radius:16px;overflow:hidden;padding:0 10px 10px;min-width:0;box-shadow:0 2px 8px rgba(99,102,241,.12)}
+.cbar{height:6px;margin:0 -10px 10px}
+.crow{display:flex;align-items:center;gap:8px}
+.av{width:34px;height:34px;min-width:34px;border-radius:12px;color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center}
+.cinfo{min-width:0;flex:1}
+.clabel{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ccat{display:inline-block;font-size:10px;font-weight:700;color:#fff;padding:1px 7px;border-radius:8px;margin-top:2px}
+.phone{display:block;width:100%;text-align:left;margin-top:8px;font-weight:700;font-size:14px;word-break:break-all;min-height:24px}
+.time{font-size:11px;color:#9ca3af;margin-top:1px}
+.btn-chat{width:100%;height:44px;margin-top:8px;border-radius:12px;color:#fff;font-size:14px;font-weight:700}
+.mini{display:flex;gap:6px;margin-top:6px}
+.mini button{flex:1;height:38px;border-radius:10px;background:#f1f5f9;font-size:15px}
+.mini .del{background:#fee2e2}
+.empty{padding:36px 16px;text-align:center;color:#6b7280}
+.empty-icon{font-size:40px;margin-bottom:8px}
+.empty b{display:block;color:#374151;font-size:15px}
+.empty p{font-size:12px;margin-top:6px;line-height:1.5}
+.btn-guide{margin-top:14px;height:44px;padding:0 18px;border-radius:14px;color:#fff;font-size:13px;font-weight:700;background:#6366f1;background:linear-gradient(135deg,#818cf8,#6366f1)}
+.panel{background:#fff;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(99,102,241,.1)}
+.panel h3{font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.panel p,.panel li{font-size:13px;line-height:1.6;color:#4b5563}
+.ic{width:30px;height:30px;min-width:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff}
+.steps{list-style:none}
+.steps li{display:flex;gap:10px;margin-bottom:12px}
+.num{width:26px;height:26px;min-width:26px;border-radius:50%;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.kv{display:flex;gap:10px;margin-bottom:12px}
+.tips{padding-left:18px}
+.tips li{margin-bottom:6px}
+.tag{display:inline-block;font-size:11px;font-weight:700;color:#fff;padding:3px 9px;border-radius:12px;margin:0 4px 4px 0}
+.backdrop{position:absolute;left:0;right:0;top:0;bottom:0;background:rgba(17,24,39,.5);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+.backdrop.show{display:flex}
+.kb .backdrop{align-items:flex-start;padding-top:12px}
+.modal{background:#fff;width:100%;max-width:340px;border-radius:20px;padding:16px;max-height:100%;overflow-y:auto}
+.modal h3{font-size:17px;margin-bottom:4px}
+.modal p{font-size:13px;color:#6b7280}
+.modal input{width:100%;height:46px;border:2px solid #e5e7eb;border-radius:12px;padding:0 12px;margin:10px 0;outline:0}
+.modal input:focus{border-color:#a78bfa}
+.sw{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.sw button{height:40px;border-radius:12px;color:#fff;font-size:12px;font-weight:700;border:3px solid transparent;opacity:.55}
+.sw button.on{opacity:1;border-color:#1f2937}
+.macts{display:flex;gap:8px}
+.macts button{flex:1;height:46px;border-radius:14px;font-size:14px;font-weight:700}
+.b-ghost{background:#f1f5f9;color:#4b5563}
+.b-ok{color:#fff;background:#14b8a6;background:linear-gradient(135deg,#34d399,#06b6d4)}
+.b-red{color:#fff;background:#ef4444;background:linear-gradient(135deg,#fb7185,#ef4444)}
+.toast{position:absolute;left:16px;right:16px;bottom:24px;z-index:60;text-align:center;font-size:13px;font-weight:700;color:#fff;padding:11px 14px;border-radius:14px;background:#1f2937;background:linear-gradient(135deg,#374151,#111827);display:none}
+.toast.show{display:block}
+#splash{position:fixed;left:0;right:0;top:0;bottom:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:700;background:#06b6d4;background:linear-gradient(160deg,#34d399,#06b6d4 50%,#6366f1)}
+#splash .logo{width:64px;height:64px;font-size:32px;margin-bottom:12px}
+#errbox{display:none;position:fixed;left:8px;right:8px;top:8px;z-index:200;background:#dc2626;color:#fff;font-size:12px;line-height:1.4;padding:10px;border-radius:10px;word-break:break-word;-webkit-user-select:text;user-select:text}
+</style>
+</head>
+<body>
+<div id="errbox"></div>
+<div id="splash"><div class="logo">💬</div>Memuat…</div>
+<script>
+window.onerror=function(msg,src,line,col){
+  var b=document.getElementById('errbox');
+  if(b){b.style.display='block';b.textContent='Error: '+msg+' (baris '+line+')';}
+  return false;
+};
+</script>
+
+<div class="app" id="app">
+  <header class="header">
+    <div class="logo-wrap">
+      <div class="logo">💬</div>
+      <div><h1>QuickChat</h1><p id="subhead">Kirim WA tanpa simpan kontak</p></div>
+    </div>
+    <div class="hbtns"><button class="hbtn on" id="tab-beranda" type="button">🏠</button><button class="hbtn" id="tab-panduan" type="button">📘</button><button class="hbtn" id="tab-fungsi" type="button">⚙️</button><button class="hbtn" id="btn-clear" type="button">🗑️</button></div>
+  </header>
+  <div class="offline-bar" id="offline-bar">Mode offline: semua fitur tetap jalan</div>
+
+  <main class="content" id="content">
+    <section class="view active" id="view-beranda">
+      <div class="banner">
+        <span class="badge">📋 Deteksi otomatis</span>
+        <p class="status" id="clipboard-status">Salin nomor HP, lalu buka aplikasi ini.</p>
+        <div class="banner-input">
+          <input type="tel" id="manual-number" placeholder="Ketik 08xx…" inputmode="numeric" autocomplete="off">
+          <button class="btn-add" id="btn-add" type="button">+ Tambah</button>
+        </div>
+        <p class="hint">Atau tempel nomor (paste) di mana saja pada layar ini.</p>
+      </div>
+      <div class="chips" id="chips"></div>
+      <div class="grid-head"><h2>Kontak sementara</h2><span class="count" id="counter-badge">0 kontak</span></div>
+      <div id="grid-container" class="grid"></div>
+      <div id="empty-state" class="empty">
+        <div class="empty-icon">📒</div>
+        <b>Belum ada kontak</b>
+        <p>Salin nomor HP dari mana saja atau ketik di atas. Data hanya tersimpan di HP ini.</p>
+        <button class="btn-guide" id="btn-guide" type="button">Lihat cara pakai</button>
+      </div>
+    </section>
+
+    <section class="view" id="view-panduan">
+      <div class="panel">
+        <h3><span class="ic" style="background:linear-gradient(135deg,#7dd3fc,#0ea5e9)">📘</span>Panduan</h3>
+        <p>Untuk UMKM, kurir, dan CS yang sering chat pelanggan baru tanpa menyimpan nomor.</p>
+      </div>
+      <div class="panel">
+        <h3><span class="ic" style="background:linear-gradient(135deg,#6ee7b7,#10b981)">🚀</span>Cara cepat</h3>
+        <ol class="steps">
+          <li><span class="num" style="background:linear-gradient(135deg,#6ee7b7,#10b981)">1</span><span><b>Salin nomor</b> dari WA, marketplace, IG, atau catatan. Nomor langsung masuk daftar.</span></li>
+          <li><span class="num" style="background:linear-gradient(135deg,#c4b5fd,#8b5cf6)">2</span><span><b>Beri label dan warna</b> lewat tombol ✏️ di kartu, misalnya Kurir atau Pembeli.</span></li>
+          <li><span class="num" style="background:linear-gradient(135deg,#fdba74,#f97316)">3</span><span><b>Tekan Chat</b> untuk membuka WhatsApp tanpa menyimpan kontak. Hapus jika sudah selesai.</span></li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h3><span class="ic" style="background:linear-gradient(135deg,#fde047,#f59e0b)">💡</span>Tips</h3>
+        <ul class="tips">
+          <li>Warna kartu menandai kategori. Ketuk chip warna di atas daftar untuk menyaring.</li>
+          <li>Nomor 08xx otomatis diubah menjadi 628xx untuk wa.me.</li>
+          <li>Ketuk nomor pada kartu untuk menyalinnya.</li>
+          <li>Kosongkan daftar tiap akhir hari demi privasi.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3><span class="ic" style="background:linear-gradient(135deg,#f9a8d4,#ec4899)">🔒</span>Privasi</h3>
+        <p>Data hanya disimpan di perangkat ini. Tidak ada server dan tidak ada pelacakan.</p>
+      </div>
+    </section>
+
+    <section class="view" id="view-fungsi">
+      <div class="panel">
+        <h3><span class="ic" style="background:linear-gradient(135deg,#c4b5fd,#8b5cf6)">⚙️</span>Fungsi utama</h3>
+        <div class="kv"><span class="ic" style="background:linear-gradient(135deg,#6ee7b7,#10b981)">💬</span><div><b>Chat tanpa simpan</b><p>Buka wa.me langsung tanpa menambah kontak HP.</p></div></div>
+        <div class="kv"><span class="ic" style="background:linear-gradient(135deg,#7dd3fc,#0ea5e9)">📋</span><div><b>Deteksi clipboard</b><p>Nomor yang disalin terbaca saat aplikasi dibuka atau saat paste.</p></div></div>
+        <div class="kv"><span class="ic" style="background:linear-gradient(135deg,#f9a8d4,#ec4899)">🏷️</span><div><b>Label dan kategori warna</b><p>Delapan warna untuk membedakan jenis kontak.</p></div></div>
+        <div class="kv"><span class="ic" style="background:linear-gradient(135deg,#fdba74,#f97316)">🔢</span><div><b>Normalisasi nomor</b><p>Spasi, strip, dan tanda kurung dibuang otomatis.</p></div></div>
+        <div class="kv"><span class="ic" style="background:linear-gradient(135deg,#fde047,#f59e0b)">📴</span><div><b>Berjalan offline</b><p>Tanpa CDN, font luar, atau gambar dari internet.</p></div></div>
+      </div>
+      <div class="panel">
+        <h3><span class="ic" style="background:linear-gradient(135deg,#5eead4,#06b6d4)">🧩</span>Teknis</h3>
+        <ul class="tips">
+          <li>CSS dan JavaScript inline dalam satu file</li>
+          <li>Ikon memakai emoji</li>
+          <li>Penyimpanan localStorage, tetap jalan jika gagal</li>
+        </ul>
+        <div style="margin-top:10px"><span class="tag" style="background:#10b981">Offline</span><span class="tag" style="background:#0ea5e9">Tanpa CDN</span><span class="tag" style="background:#8b5cf6">Privasi lokal</span><span class="tag" style="background:#ec4899">UMKM</span></div>
+      </div>
+    </section>
+  </main>
+
+
+  <div id="label-modal" class="backdrop">
+    <div class="modal">
+      <h3>Label dan kategori</h3>
+      <p id="modal-phone-text" class="mono"></p>
+      <input type="text" id="modal-label-input" placeholder="Contoh: Kurir JNE" maxlength="40">
+      <div class="sw" id="swatches"></div>
+      <div class="macts"><button class="b-ghost" id="m-cancel" type="button">Batal</button><button class="b-ok" id="m-save" type="button">Simpan</button></div>
+    </div>
+  </div>
+
+  <div id="confirm-modal" class="backdrop">
+    <div class="modal">
+      <h3>Hapus semua kontak?</h3>
+      <p>Seluruh daftar sementara akan dihapus dari HP ini.</p>
+      <div class="macts" style="margin-top:14px"><button class="b-ghost" id="c-cancel" type="button">Batal</button><button class="b-red" id="c-ok" type="button">Hapus semua</button></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+window.QC_DATA={
+  cats:[
+    {n:'Pelanggan',a:'#6ee7b7',b:'#10b981'},
+    {n:'Kurir',a:'#7dd3fc',b:'#0ea5e9'},
+    {n:'Reseller',a:'#c4b5fd',b:'#8b5cf6'},
+    {n:'Favorit',a:'#f9a8d4',b:'#ec4899'},
+    {n:'Pesanan',a:'#fdba74',b:'#f97316'},
+    {n:'Tagihan',a:'#fde047',b:'#f59e0b'},
+    {n:'Retur',a:'#fca5a5',b:'#ef4444'},
+    {n:'Lainnya',a:'#5eead4',b:'#06b6d4'}
+  ],
+  sample:[
+    {phone:'081234567890',label:'Kurir Paket JNE',ci:1,age:0},
+    {phone:'089876543210',label:'Pembeli Baju Tokopedia',ci:4,age:600000}
+  ]
+};
+</script>
+
+<script>
+(function(){
+  'use strict';
+  var D=window.QC_DATA;
+  var KEY='qc_contacts_v3';
+  var contacts=[],filter=-1,view='beranda',editId=null,editCi=0,lastClip='',baseH=window.innerHeight,toastTimer=null;
+  var titles={beranda:'Kirim WA tanpa simpan kontak',panduan:'Panduan dan cara pakai',fungsi:'Fungsi dan teknis offline'};
+
+  function $(id){return document.getElementById(id);}
+  function lsGet(k){try{return window.localStorage.getItem(k);}catch(e){return null;}}
+  function lsSet(k,v){try{window.localStorage.setItem(k,v);}catch(e){}}
+  function grad(i){var c=D.cats[i%D.cats.length];return 'linear-gradient(135deg,'+c.a+','+c.b+')';}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
+
+  function toast(msg){
+    var t=$('toast');t.textContent=msg;t.className='toast show';
+    if(toastTimer){clearTimeout(toastTimer);}
+    toastTimer=setTimeout(function(){t.className='toast';},2000);
+  }
+
+  function load(){
+    var raw=lsGet(KEY)||lsGet('temp_contacts_v2')||lsGet('temp_contacts');
+    var arr=null,i,c,out=[];
+    if(raw){try{arr=JSON.parse(raw);}catch(e){arr=null;}}
+    if(!arr||!arr.length){
+      if(raw&&arr){return [];}
+      arr=[];
+      for(i=0;i<D.sample.length;i++){
+        arr.push({id:i+1,phone:D.sample[i].phone,label:D.sample[i].label,ci:D.sample[i].ci,ts:Date.now()-D.sample[i].age});
+      }
+    }
+    for(i=0;i<arr.length;i++){
+      c=arr[i];
+      if(!c||!c.phone){continue;}
+      out.push({id:c.id||(Date.now()+i),phone:String(c.phone),label:c.label||'Tanpa label',ci:(typeof c.ci==='number'?c.ci:i)%D.cats.length,ts:c.ts||Date.now()});
+    }
+    return out;
+  }
+  function save(){lsSet(KEY,JSON.stringify(contacts));render();}
+
+  function relTime(ts){
+    var m=Math.floor((Date.now()-ts)/60000);
+    if(m<1){return 'Baru saja';}
+    if(m<60){return m+' mnt lalu';}
+    if(m<1440){return Math.floor(m/60)+' jam lalu';}
+    return Math.floor(m/1440)+' hari lalu';
+  }
+
+  function fmt(p){
+    var d=String(p).replace(/\D/g,'');
+    if(d.charAt(0)==='0'){d='62'+d.slice(1);}
+    else if(d.charAt(0)==='8'){d='62'+d;}
+    return d;
+  }
+
+  function render(){
+    var grid=$('grid-container'),empty=$('empty-state'),html='',i,c,shown=0,chips='';
+    $('counter-badge').textContent=contacts.length+' kontak';
+    chips='<button class="chip'+(filter===-1?' on':'')+'" data-act="filter" data-i="-1" type="button"'+(filter===-1?' style="background:linear-gradient(135deg,#818cf8,#6366f1)"':'')+'>Semua</button>';
+    for(i=0;i<D.cats.length;i++){
+      chips+='<button class="chip'+(filter===i?' on':'')+'" data-act="filter" data-i="'+i+'" type="button"'+(filter===i?' style="background:'+grad(i)+'"':'')+'>'+D.cats[i].n+'</button>';
+    }
+    $('chips').innerHTML=chips;
+    for(i=0;i<contacts.length;i++){
+      c=contacts[i];
+      if(filter!==-1&&c.ci!==filter){continue;}
+      shown++;
+      html+='<div class="card"><div class="cbar" style="background:'+grad(c.ci)+'"></div>'+
+        '<div class="crow"><div class="av" style="background:'+grad(c.ci)+'">'+esc(c.label.charAt(0).toUpperCase())+'</div>'+
+        '<div class="cinfo"><div class="clabel">'+esc(c.label)+'</div><span class="ccat" style="background:'+grad(c.ci)+'">'+D.cats[c.ci].n+'</span></div></div>'+
+        '<button class="phone mono" type="button" data-act="copy" data-id="'+c.id+'">'+esc(c.phone)+'</button>'+
+        '<div class="time">'+relTime(c.ts)+'</div>'+
+        '<button class="btn-chat" type="button" data-act="chat" data-id="'+c.id+'" style="background:'+grad(c.ci)+'">💬 Chat</button>'+
+        '<div class="mini"><button type="button" data-act="edit" data-id="'+c.id+'">✏️</button><button class="del" type="button" data-act="del" data-id="'+c.id+'">🗑️</button></div></div>';
+    }
+    grid.innerHTML=html;
+    empty.style.display=shown===0?'block':'none';
+    if(shown===0&&contacts.length>0){empty.getElementsByTagName('b')[0].textContent='Tidak ada kontak di kategori ini';}
+    else{empty.getElementsByTagName('b')[0].textContent='Belum ada kontak';}
+  }
+
+  function showView(name){
+    var names=['beranda','panduan','fungsi'],i;
+    for(i=0;i<names.length;i++){
+      $('view-'+names[i]).className='view'+(names[i]===name?' active':'');
+      $('tab-'+names[i]).className='hbtn'+(names[i]===name?' on':'');
+    }
+    view=name;
+    $('subhead').textContent=titles[name];
+    $('content').scrollTop=0;
+  }
+
+  function openChat(phone){
+    var url='https://wa.me/'+fmt(phone),b=window.AndroidBridge;
+    try{
+      if(b&&typeof b.openUrl==='function'){b.openUrl(url);return;}
+    }catch(e){}
+    window.location.href=url;
+  }
+
+  function copyText(t){
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(t).then(function(){toast('Nomor disalin');},function(){fallbackCopy(t);});
+        return;
+      }
+    }catch(e){}
+    fallbackCopy(t);
+  }
+  function fallbackCopy(t){
+    var ta=document.createElement('textarea'),ok=false;
+    ta.value=t;ta.style.position='fixed';ta.style.left='-1000px';
+    document.body.appendChild(ta);ta.focus();ta.select();
+    try{ok=document.execCommand('copy');}catch(e){ok=false;}
+    document.body.removeChild(ta);
+    toast(ok?'Nomor disalin':'Gagal menyalin');
+  }
+
+  function findById(id){
+    var i;
+    for(i=0;i<contacts.length;i++){if(String(contacts[i].id)===String(id)){return contacts[i];}}
+    return null;
+  }
+
+  function addContact(phone,label,silent){
+    var f=fmt(phone),i;
+    for(i=0;i<contacts.length;i++){
+      if(fmt(contacts[i].phone)===f){if(!silent){toast('Nomor sudah ada');}return false;}
+    }
+    contacts.unshift({id:Date.now(),phone:phone,label:label,ci:contacts.length%D.cats.length,ts:Date.now()});
+    save();
+    return true;
+  }
+
+  function detect(raw,silent){
+    if(!raw){return;}
+    var m=String(raw).match(/(\+?62|0)8[\d\s().\-]{7,16}\d/g),cand=null,d,i;
+    if(m){
+      for(i=0;i<m.length;i++){
+        d=m[i].replace(/\D/g,'');
+        if(d.length>=10&&d.length<=14){cand=m[i].replace(/[\s().\-]/g,'');break;}
+      }
+    }
+    if(!cand){return;}
+    $('clipboard-status').textContent='Terdeteksi: '+cand;
+    if(addContact(cand,'Auto detect',true)&&!silent){showView('beranda');toast('Nomor ditambahkan');}
+  }
+
+  function addManual(){
+    var input=$('manual-number'),val=input.value.replace(/[\s().\-]/g,''),d=val.replace(/\D/g,'');
+    if(!val){toast('Masukkan nomor dulu');return;}
+    if(d.length<9||d.length>15){toast('Nomor tidak valid');return;}
+    if(addContact(val,'Nomor baru',false)){input.value='';toast('Nomor ditambahkan');}
+  }
+
+  function openEdit(id){
+    var c=findById(id),s='',i;
+    if(!c){return;}
+    editId=c.id;editCi=c.ci;
+    $('modal-phone-text').textContent='Nomor: '+c.phone;
+    $('modal-label-input').value=c.label;
+    for(i=0;i<D.cats.length;i++){
+      s+='<button type="button" data-ci="'+i+'" class="'+(i===editCi?'on':'')+'" style="background:'+grad(i)+'">'+D.cats[i].n+'</button>';
+    }
+    $('swatches').innerHTML=s;
+    $('label-modal').className='backdrop show';
+  }
+  function closeEdit(){$('label-modal').className='backdrop';editId=null;try{$('modal-label-input').blur();}catch(e){}}
+  function saveEdit(){
+    var c=findById(editId),v=$('modal-label-input').value.replace(/^\s+|\s+$/g,'');
+    if(c){c.label=v||'Tanpa label';c.ci=editCi;save();}
+    closeEdit();
+  }
+  function openConfirm(){$('confirm-modal').className='backdrop show';}
+  function closeConfirm(){$('confirm-modal').className='backdrop';}
+
+  function readClipboard(){
+    try{
+      if(navigator.clipboard&&navigator.clipboard.readText){
+        navigator.clipboard.readText().then(function(t){
+          if(t&&t!==lastClip){lastClip=t;lsSet('qc_lastclip',t);detect(t,true);}
+        },function(){});
+      }
+    }catch(e){}
+  }
+
+  function checkKeyboard(){
+    var h=window.innerHeight;
+    if(h>baseH){baseH=h;}
+    $('app').className=(baseH-h>120)?'app kb':'app';
+  }
+
+  function checkOnline(){
+    var on=true;
+    try{on=navigator.onLine!==false;}catch(e){}
+    $('offline-bar').className='offline-bar'+(on?'':' show');
+  }
+
+  function actOf(el){
+    var n=el,k=0;
+    while(n&&k<4){
+      if(n.getAttribute&&n.getAttribute('data-act')){return n;}
+      n=n.parentNode;k++;
+    }
+    return null;
+  }
+
+  /* Jembatan Android */
+  window.onPhotosPicked=function(arr){
+    /* Aplikasi ini belum memakai foto; perkecil agar aman bila dipakai nanti */
+    if(!arr||!arr.length){return;}
+    var i;
+    for(i=0;i<arr.length;i++){shrink(arr[i],1600,function(){});}
+  };
+  function shrink(uri,max,cb){
+    var img=new Image();
+    img.onload=function(){
+      var w=img.width,h=img.height,r=Math.min(1,max/Math.max(w,h)),cv=document.createElement('canvas');
+      cv.width=Math.round(w*r);cv.height=Math.round(h*r);
+      cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+      cb(cv.toDataURL('image/jpeg',0.85));
+    };
+    img.onerror=function(){cb(null);};
+    img.src=uri;
+  }
+  window.androidBack=function(){
+    if($('label-modal').className.indexOf('show')>-1){closeEdit();return true;}
+    if($('confirm-modal').className.indexOf('show')>-1){closeConfirm();return true;}
+    if(view!=='beranda'){showView('beranda');return true;}
+    return false;
+  };
+
+  function init(){
+    var n=['beranda','panduan','fungsi'],i;
+    lastClip=lsGet('qc_lastclip')||'';
+    contacts=load();
+    for(i=0;i<n.length;i++){
+      (function(name){$('tab-'+name).addEventListener('click',function(){showView(name);});})(n[i]);
+    }
+    $('btn-add').addEventListener('click',addManual);
+    $('manual-number').addEventListener('keydown',function(e){if(e.keyCode===13){addManual();}});
+    $('btn-guide').addEventListener('click',function(){showView('panduan');});
+    $('btn-clear').addEventListener('click',function(){if(contacts.length){openConfirm();}else{toast('Daftar sudah kosong');}});
+    $('c-cancel').addEventListener('click',closeConfirm);
+    $('c-ok').addEventListener('click',function(){contacts=[];save();closeConfirm();toast('Semua kontak dihapus');});
+    $('m-cancel').addEventListener('click',closeEdit);
+    $('m-save').addEventListener('click',saveEdit);
+    $('label-modal').addEventListener('click',function(e){if(e.target===this){closeEdit();}});
+    $('confirm-modal').addEventListener('click',function(e){if(e.target===this){closeConfirm();}});
+    $('swatches').addEventListener('click',function(e){
+      var t=e.target,b=$('swatches').getElementsByTagName('button'),j;
+      if(!t||!t.getAttribute('data-ci')){return;}
+      editCi=parseInt(t.getAttribute('data-ci'),10);
+      for(j=0;j<b.length;j++){b[j].className=(j===editCi)?'on':'';}
+    });
+    $('chips').addEventListener('click',function(e){
+      var el=actOf(e.target);
+      if(el){filter=parseInt(el.getAttribute('data-i'),10);render();}
+    });
+    $('grid-container').addEventListener('click',function(e){
+      var el=actOf(e.target),act,id,c;
+      if(!el){return;}
+      act=el.getAttribute('data-act');id=el.getAttribute('data-id');c=findById(id);
+      if(!c){return;}
+      if(act==='chat'){openChat(c.phone);}
+      else if(act==='copy'){copyText(c.phone);}
+      else if(act==='edit'){openEdit(c.id);}
+      else if(act==='del'){contacts=contacts.filter(function(x){return x.id!==c.id;});save();toast('Kontak dihapus');}
+    });
+    document.addEventListener('paste',function(e){
+      var t=e.target,txt='';
+      if(t&&t.tagName==='INPUT'){return;}
+      try{txt=(e.clipboardData||window.clipboardData).getData('text');}catch(err){txt='';}
+      detect(txt,false);
+    });
+    document.addEventListener('contextmenu',function(e){
+      var t=e.target;
+      if(!t||(t.tagName!=='INPUT'&&t.tagName!=='TEXTAREA')){e.preventDefault();}
+    });
+    document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'){readClipboard();}});
+    window.addEventListener('focus',readClipboard);
+    window.addEventListener('resize',checkKeyboard);
+    window.addEventListener('online',checkOnline);
+    window.addEventListener('offline',checkOnline);
+    checkOnline();
+    showView('beranda');
+    save();
+    var s=$('splash');
+    if(s&&s.parentNode){s.parentNode.removeChild(s);}
+  }
+
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}
+  else{init();}
+})();
+</script>
+</body>
+</html>

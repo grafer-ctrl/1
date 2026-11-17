@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>GridPin</title>
+<meta name="theme-color" content="#818cf8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+input,textarea{-webkit-user-select:text;user-select:text}
+html,body{height:100%}
+body{position:fixed;top:0;left:0;right:0;bottom:0;overflow:hidden;font-family:Roboto,sans-serif;color:#1f2937;background:#e0e7ff;background:linear-gradient(160deg,#e0f2fe,#ede9fe 50%,#fce7f3)}
+button{font-family:inherit;border:0;background:none;color:inherit;cursor:pointer}
+input{font-family:inherit;font-size:15px}
+.mono{font-family:monospace}
+.app{position:relative;height:100%;max-width:520px;margin:0 auto;padding-bottom:constant(safe-area-inset-bottom);padding-bottom:env(safe-area-inset-bottom);display:flex;flex-direction:column;background:#f8fafc;overflow:hidden}
+.header{flex:0 0 auto;color:#fff;padding:10px 0 0;padding-top:calc(10px + constant(safe-area-inset-top));padding-top:calc(10px + env(safe-area-inset-top));background:#818cf8;background:linear-gradient(120deg,#38bdf8,#818cf8 55%,#f472b6)}
+.htop{display:flex;justify-content:space-between;align-items:center;padding:0 14px 10px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.logo{width:40px;height:40px;min-width:40px;border-radius:14px;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:20px}
+.title{font-size:18px;font-weight:700;line-height:1.2}
+.pro{font-size:10px;font-weight:700;background:rgba(255,255,255,.3);border-radius:8px;padding:1px 7px;margin-left:6px}
+.sub{font-size:11px;opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hbtns{display:flex;gap:6px;margin-left:8px}
+.hbtn{width:44px;height:44px;border-radius:14px;background:rgba(255,255,255,.22);font-size:17px;font-weight:700}
+.hbtn.add{background:#fff;color:#7c3aed;font-size:22px}
+.chips{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 14px 12px}
+.chip{flex:0 0 auto;height:38px;padding:0 14px;border-radius:19px;font-size:13px;font-weight:700;color:#fff;background:rgba(255,255,255,.22);border:2px solid transparent}
+.chip.on{color:#1f2937;background:#fff}
+.content{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px}
+.banner{border-radius:18px;padding:12px 14px;margin-bottom:12px;background:#dbeafe;background:linear-gradient(135deg,#dbeafe,#ede9fe 55%,#fce7f3);border:1px solid #e0e7ff}
+.banner b{font-size:14px;display:block;margin-bottom:2px}
+.banner p{font-size:12px;color:#4b5563;line-height:1.5}
+.search{width:100%;height:46px;border:2px solid #fff;border-radius:14px;padding:0 14px;outline:0;background:#fff;box-shadow:0 2px 8px rgba(99,102,241,.1);margin-bottom:12px}
+.search:focus{border-color:#a78bfa}
+.shead{display:flex;justify-content:space-between;align-items:center;margin:0 2px 8px}
+.shead h2{font-size:14px;color:#374151}
+.count{font-size:12px;font-weight:700;color:#fff;padding:3px 10px;border-radius:12px;background:#8b5cf6;background:linear-gradient(135deg,#a78bfa,#7c3aed)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (min-width:430px){.grid{grid-template-columns:1fr 1fr 1fr}}
+.card{background:#fff;border-radius:16px;overflow:hidden;padding:0 10px 10px;min-width:0;box-shadow:0 2px 8px rgba(99,102,241,.12)}
+.cbar{height:6px;margin:0 -10px 10px}
+.crow{display:flex;align-items:center;gap:8px}
+.av{width:36px;height:36px;min-width:36px;border-radius:12px;font-size:18px;display:flex;align-items:center;justify-content:center}
+.cinfo{min-width:0;flex:1}
+.cname{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ccat{display:inline-block;font-size:10px;font-weight:700;color:#fff;padding:1px 7px;border-radius:8px;margin-top:2px}
+.phone{display:block;width:100%;text-align:left;margin-top:8px;font-size:13px;font-weight:700;min-height:24px;word-break:break-all;color:#374151}
+.btn-chat{width:100%;height:44px;margin-top:6px;border-radius:12px;color:#fff;font-size:14px;font-weight:700}
+.mini{display:flex;gap:6px;margin-top:6px}
+.mini button{flex:1;height:38px;border-radius:10px;background:#f1f5f9;font-size:15px}
+.mini .del{background:#fee2e2}
+.empty{text-align:center;padding:36px 16px;color:#6b7280;font-size:13px;line-height:1.6}
+.empty i{display:block;font-style:normal;font-size:40px;margin-bottom:6px}
+.empty b{display:block;color:#374151;font-size:15px}
+.backdrop{position:absolute;left:0;right:0;top:0;bottom:0;background:rgba(17,24,39,.5);display:none;align-items:flex-end;justify-content:center;z-index:50}
+.backdrop.show{display:flex}
+.backdrop.mid{align-items:center;padding:16px}
+.sheet{width:100%;background:#fff;border-radius:22px 22px 0 0;padding:16px;max-height:92%;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.mid .sheet{max-width:340px;border-radius:20px}
+.sheet h3{font-size:17px}
+.sheet p{font-size:13px;color:#6b7280}
+.shd{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.x{width:38px;height:38px;border-radius:12px;background:#f1f5f9;font-size:15px}
+.lbl{font-size:12px;font-weight:700;color:#4b5563;display:block;margin:10px 0 4px}
+.inp{width:100%;height:46px;border:2px solid #e5e7eb;border-radius:12px;padding:0 12px;outline:0;background:#fff}
+.inp:focus{border-color:#a78bfa}
+.sw{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.sw button{height:40px;border-radius:12px;color:#fff;font-size:12px;font-weight:700;border:3px solid transparent;opacity:.55}
+.sw button.on{opacity:1;border-color:#1f2937}
+.macts{display:flex;gap:8px;margin-top:14px}
+.macts button{flex:1;height:46px;border-radius:14px;font-size:14px;font-weight:700}
+.b-ghost{background:#f1f5f9;color:#4b5563}
+.b-ok{color:#fff;background:#818cf8;background:linear-gradient(135deg,#38bdf8,#818cf8 55%,#a855f7)}
+.b-red{color:#fff;background:#ef4444;background:linear-gradient(135deg,#fb7185,#ef4444)}
+.step{display:flex;gap:10px;margin-bottom:12px}
+.num{width:28px;height:28px;min-width:28px;border-radius:50%;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.step b{font-size:13px;display:block;margin-bottom:2px;color:#1f2937}
+.step span{font-size:12px;color:#4b5563;line-height:1.5}
+code{background:#f1f5f9;padding:0 5px;border-radius:5px;font-size:11px;font-family:monospace}
+.sim{border-radius:14px;padding:12px;background:#fef3c7;background:linear-gradient(135deg,#fef9c3,#fde68a);margin-top:4px}
+.sim b{font-size:12px;display:block;margin-bottom:6px;color:#92400e}
+.sim div{font-size:12px;color:#78350f;line-height:1.6;margin-bottom:4px}
+.toast{position:absolute;left:16px;right:16px;bottom:24px;z-index:60;text-align:center;font-size:13px;font-weight:700;color:#fff;padding:11px 14px;border-radius:14px;background:#1f2937;background:linear-gradient(135deg,#374151,#111827);display:none}
+.toast.show{display:block}
+.kb .banner{display:none}
+.kb .sheet{max-height:100%}
+#splash{position:fixed;left:0;right:0;top:0;bottom:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:700;background:#818cf8;background:linear-gradient(160deg,#38bdf8,#818cf8 50%,#f472b6)}
+#splash .logo{width:64px;height:64px;font-size:32px;margin-bottom:12px}
+#errbox{display:none;position:fixed;left:8px;right:8px;top:8px;z-index:200;background:#dc2626;color:#fff;font-size:12px;line-height:1.4;padding:10px;border-radius:10px;word-break:break-word;-webkit-user-select:text;user-select:text}
+</style>
+</head>
+<body>
+<div id="errbox"></div>
+<div id="splash"><div class="logo">📌</div>Memuat…</div>
+<script>
+window.onerror=function(msg,src,line){
+  var b=document.getElementById('errbox');
+  if(b){b.style.display='block';b.textContent='Error: '+msg+' (baris '+line+')';}
+  return false;
+};
+</script>
+
+<div class="app" id="app">
+  <header class="header">
+    <div class="htop">
+      <div class="brand">
+        <div class="logo">📌</div>
+        <div style="min-width:0"><div class="title">GridPin<span class="pro">Pro</span></div><div class="sub">Pin chat tanpa batas, rapi per folder</div></div>
+      </div>
+      <div class="hbtns">
+        <button class="hbtn" id="btn-guide" type="button">?</button>
+        <button class="hbtn add" id="btn-add" type="button">+</button>
+      </div>
+    </div>
+    <div class="chips" id="chips"></div>
+  </header>
+
+  <main class="content" id="content">
+    <div class="banner"><b>📌 Anti tenggelam</b><p>Simpan ratusan kontak penting ke folder berwarna. Sekali ketuk, langsung masuk chat.</p></div>
+    <input class="search" id="search" type="text" placeholder="Cari nama atau nomor…" autocomplete="off">
+    <div class="shead"><h2>Daftar pintasan</h2><span class="count" id="total">0</span></div>
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" style="display:none"><i>📂</i><b id="empty-t">Belum ada pintasan</b><span id="empty-s">Tekan + untuk menambah kontak pertama.</span></div>
+  </main>
+
+  <div id="form-modal" class="backdrop">
+    <div class="sheet">
+      <div class="shd"><h3 id="form-title">Tambah pintasan</h3><button class="x" id="f-x" type="button">✕</button></div>
+      <label class="lbl">Nama kontak atau grup</label>
+      <input class="inp" type="text" id="in-name" placeholder="Contoh: Pak Bos" maxlength="40">
+      <label class="lbl">Nomor tujuan</label>
+      <input class="inp" type="tel" id="in-phone" placeholder="08xx atau 628xx" inputmode="numeric" maxlength="20">
+      <label class="lbl">Folder</label>
+      <div class="sw" id="swatches"></div>
+      <div class="macts"><button class="b-ghost" id="f-cancel" type="button">Batal</button><button class="b-ok" id="f-save" type="button">Simpan</button></div>
+    </div>
+  </div>
+
+  <div id="del-modal" class="backdrop mid">
+    <div class="sheet">
+      <h3>Hapus pintasan?</h3>
+      <p id="del-text" style="margin-top:4px">Pintasan dihapus dari GridPin. Chat aslinya tidak ikut terhapus.</p>
+      <div class="macts"><button class="b-ghost" id="d-cancel" type="button">Batal</button><button class="b-red" id="d-ok" type="button">Hapus</button></div>
+    </div>
+  </div>
+
+  <div id="guide-modal" class="backdrop">
+    <div class="sheet">
+      <div class="shd"><h3>📖 Panduan GridPin</h3><button class="x" id="g-x" type="button">✕</button></div>
+      <div class="step"><span class="num" style="background:linear-gradient(135deg,#7dd3fc,#0ea5e9)">1</span><div><b>Tekan tombol +</b><span>Tombol putih di pojok kanan atas membuka form kontak baru.</span></div></div>
+      <div class="step"><span class="num" style="background:linear-gradient(135deg,#f9a8d4,#ec4899)">2</span><div><b>Isi nama, nomor, dan folder</b><span>Nomor boleh <code>08123456789</code> atau <code>628123456789</code>. Pilih folder dari warna yang tersedia.</span></div></div>
+      <div class="step"><span class="num" style="background:linear-gradient(135deg,#fdba74,#f97316)">3</span><div><b>Ketuk Chat</b><span>Tombol berwarna di kartu langsung membuka WhatsApp ke nomor itu.</span></div></div>
+      <div class="step"><span class="num" style="background:linear-gradient(135deg,#6ee7b7,#10b981)">4</span><div><b>Edit, salin, atau hapus</b><span>✏️ mengubah data, 📋 menyalin nomor, 🗑️ menghapus pintasan dari GridPin.</span></div></div>
+      <div class="step"><span class="num" style="background:linear-gradient(135deg,#c4b5fd,#8b5cf6)">5</span><div><b>Saring dan cari</b><span>Ketuk chip folder di atas, atau ketik di kolom cari untuk menemukan kontak.</span></div></div>
+      <div class="sim"><b>🎬 Contoh: Rina, admin olshop</b>
+        <div>Chat pelanggan 200+, chat penting tenggelam karena pin WA hanya 3.</div>
+        <div>Rina menambah supplier dan reseller ke folder Olshop, keluarga ke Keluarga, atasan ke Kerjaan.</div>
+        <div>Saat cek stok, ia buka chip Olshop lalu ketuk Chat pada supplier.</div></div>
+      <div class="macts"><button class="b-ghost" id="g-close" type="button">Tutup</button><button class="b-ok" id="g-try" type="button">Tambah sekarang</button></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+window.GP_DATA={
+  cats:[
+    {n:'Kerjaan',e:'💼',a:'#7dd3fc',b:'#0ea5e9'},
+    {n:'Keluarga',e:'🏠',a:'#f9a8d4',b:'#ec4899'},
+    {n:'Olshop',e:'🛍',a:'#fdba74',b:'#f97316'},
+    {n:'Teman',e:'🎉',a:'#6ee7b7',b:'#10b981'},
+    {n:'Lainnya',e:'📌',a:'#c4b5fd',b:'#8b5cf6'}
+  ],
+  sample:[
+    {name:'Atasan / Manajer',phone:'628123456789',category:'Kerjaan'},
+    {name:'Grup Keluarga Inti',phone:'628987654321',category:'Keluarga'},
+    {name:'Supplier Utama',phone:'628555666777',category:'Olshop'}
+  ]
+};
+</script>
+
+<script>
+(function(){
+  'use strict';
+  var D=window.GP_DATA;
+  var KEY='gridpin_pins_v2';
+  var pins=[],filter='all',query='',editId=null,editCat='Kerjaan',delId=null,baseH=window.innerHeight,toastTimer=null;
+
+  function $(id){return document.getElementById(id);}
+  function lsGet(k){try{return window.localStorage.getItem(k);}catch(e){return null;}}
+  function lsSet(k,v){try{window.localStorage.setItem(k,v);}catch(e){}}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
+  function catIdx(n){var i;for(i=0;i<D.cats.length;i++){if(D.cats[i].n===n){return i;}}return D.cats.length-1;}
+  function grad(i){var c=D.cats[i];return 'linear-gradient(135deg,'+c.a+','+c.b+')';}
+
+  function toast(msg){
+    var t=$('toast');t.textContent=msg;t.className='toast show';
+    if(toastTimer){clearTimeout(toastTimer);}
+    toastTimer=setTimeout(function(){t.className='toast';},2000);
+  }
+
+  function load(){
+    var raw=lsGet(KEY)||lsGet('gridpin_pins_v1'),arr=null,out=[],i,p;
+    if(raw){try{arr=JSON.parse(raw);}catch(e){arr=null;}}
+    if(!arr||!(arr instanceof Array)){
+      arr=[];
+      for(i=0;i<D.sample.length;i++){arr.push({id:i+1,name:D.sample[i].name,phone:D.sample[i].phone,category:D.sample[i].category});}
+    }
+    for(i=0;i<arr.length;i++){
+      p=arr[i];
+      if(!p||!p.phone){continue;}
+      out.push({id:p.id||(Date.now()+i),name:p.name||'Tanpa nama',phone:String(p.phone),category:D.cats[catIdx(p.category)].n});
+    }
+    return out;
+  }
+  function save(){lsSet(KEY,JSON.stringify(pins));render();}
+
+  function fmt(p){
+    var d=String(p).replace(/\D/g,'');
+    if(d.charAt(0)==='0'){d='62'+d.slice(1);}
+    else if(d.charAt(0)==='8'){d='62'+d;}
+    return d;
+  }
+  function find(id){var i;for(i=0;i<pins.length;i++){if(String(pins[i].id)===String(id)){return pins[i];}}return null;}
+
+  function render(){
+    var html='',chips='',i,p,ci,shown=0,q=query.toLowerCase(),cnt={},qd=query.replace(/\D/g,'');
+    for(i=0;i<pins.length;i++){cnt[pins[i].category]=(cnt[pins[i].category]||0)+1;}
+    chips='<button class="chip'+(filter==='all'?' on':'')+'" data-f="all" type="button">Semua '+pins.length+'</button>';
+    for(i=0;i<D.cats.length;i++){
+      chips+='<button class="chip'+(filter===D.cats[i].n?' on':'')+'" data-f="'+D.cats[i].n+'" type="button">'+D.cats[i].e+' '+D.cats[i].n+' '+(cnt[D.cats[i].n]||0)+'</button>';
+    }
+    $('chips').innerHTML=chips;
+    for(i=0;i<pins.length;i++){
+      p=pins[i];
+      if(filter!=='all'&&p.category!==filter){continue;}
+      if(q&&p.name.toLowerCase().indexOf(q)<0&&!(qd&&p.phone.replace(/\D/g,'').indexOf(qd)>-1)){continue;}
+      shown++;ci=catIdx(p.category);
+      html+='<div class="card"><div class="cbar" style="background:'+grad(ci)+'"></div>'+
+        '<div class="crow"><div class="av" style="background:'+grad(ci)+'">'+D.cats[ci].e+'</div>'+
+        '<div class="cinfo"><div class="cname">'+esc(p.name)+'</div><span class="ccat" style="background:'+grad(ci)+'">'+D.cats[ci].n+'</span></div></div>'+
+        '<button class="phone mono" type="button" data-act="copy" data-id="'+p.id+'">'+esc(p.phone)+'</button>'+
+        '<button class="btn-chat" type="button" data-act="chat" data-id="'+p.id+'" style="background:'+grad(ci)+'">💬 Chat</button>'+
+        '<div class="mini"><button type="button" data-act="edit" data-id="'+p.id+'">✏️</button><button type="button" data-act="copy" data-id="'+p.id+'">📋</button><button class="del" type="button" data-act="del" data-id="'+p.id+'">🗑️</button></div></div>';
+    }
+    $('grid').innerHTML=html;
+    $('total').textContent=shown+' pintasan';
+    $('empty').style.display=shown===0?'block':'none';
+    if(pins.length===0){$('empty-t').textContent='Belum ada pintasan';$('empty-s').textContent='Tekan + untuk menambah kontak pertama.';}
+    else{$('empty-t').textContent='Tidak ada hasil';$('empty-s').textContent='Coba folder lain atau ubah kata pencarian.';}
+  }
+
+  function openChat(phone){
+    var url='https://wa.me/'+fmt(phone),b=window.AndroidBridge;
+    try{if(b&&typeof b.openUrl==='function'){b.openUrl(url);return;}}catch(e){}
+    window.location.href=url;
+  }
+  function fallbackCopy(t){
+    var ta=document.createElement('textarea'),ok=false;
+    ta.value=t;ta.style.position='fixed';ta.style.left='-1000px';
+    document.body.appendChild(ta);ta.focus();ta.select();
+    try{ok=document.execCommand('copy');}catch(e){ok=false;}
+    document.body.removeChild(ta);
+    toast(ok?'Nomor disalin':'Gagal menyalin');
+  }
+  function copyText(t){
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(t).then(function(){toast('Nomor disalin');},function(){fallbackCopy(t);});
+        return;
+      }
+    }catch(e){}
+    fallbackCopy(t);
+  }
+
+  function swatches(){
+    var s='',i;
+    for(i=0;i<D.cats.length;i++){
+      s+='<button type="button" data-c="'+D.cats[i].n+'" class="'+(D.cats[i].n===editCat?'on':'')+'" style="background:'+grad(i)+'">'+D.cats[i].e+' '+D.cats[i].n+'</button>';
+    }
+    $('swatches').innerHTML=s;
+  }
+  function openForm(id){
+    var p=id?find(id):null;
+    editId=p?p.id:null;
+    editCat=p?p.category:(filter!=='all'?filter:D.cats[0].n);
+    $('form-title').textContent=p?'Edit pintasan':'Tambah pintasan';
+    $('in-name').value=p?p.name:'';
+    $('in-phone').value=p?p.phone:'';
+    swatches();
+    $('form-modal').className='backdrop show';
+  }
+  function closeForm(){
+    $('form-modal').className='backdrop';editId=null;
+    try{$('in-name').blur();$('in-phone').blur();}catch(e){}
+  }
+  function saveForm(){
+    var name=$('in-name').value.replace(/^\s+|\s+$/g,''),phone=$('in-phone').value.replace(/[\s().\-]/g,''),d=phone.replace(/\D/g,''),p;
+    if(!name){toast('Isi nama dulu');return;}
+    if(d.length<9||d.length>15){toast('Nomor tidak valid');return;}
+    if(editId){
+      p=find(editId);
+      if(p){p.name=name;p.phone=phone;p.category=editCat;}
+    }else{
+      pins.unshift({id:Date.now(),name:name,phone:phone,category:editCat});
+    }
+    save();closeForm();toast('Tersimpan');
+  }
+
+  function openDel(id){var p=find(id);if(!p){return;}delId=p.id;$('del-text').textContent='Hapus "'+p.name+'" dari GridPin? Chat aslinya tidak ikut terhapus.';$('del-modal').className='backdrop mid show';}
+  function closeDel(){$('del-modal').className='backdrop mid';delId=null;}
+  function openGuide(){$('guide-modal').className='backdrop show';}
+  function closeGuide(){$('guide-modal').className='backdrop';}
+
+  function actOf(el){
+    var n=el,k=0;
+    while(n&&k<4){if(n.getAttribute&&n.getAttribute('data-act')){return n;}n=n.parentNode;k++;}
+    return null;
+  }
+  function checkKeyboard(){
+    var h=window.innerHeight;
+    if(h>baseH){baseH=h;}
+    $('app').className=(baseH-h>120)?'app kb':'app';
+  }
+
+  /* Jembatan Android */
+  function shrink(uri,max,cb){
+    var img=new Image();
+    img.onload=function(){
+      var r=Math.min(1,max/Math.max(img.width,img.height)),cv=document.createElement('canvas');
+      cv.width=Math.round(img.width*r);cv.height=Math.round(img.height*r);
+      cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+      cb(cv.toDataURL('image/jpeg',0.85));
+    };
+    img.onerror=function(){cb(null);};
+    img.src=uri;
+  }
+  window.onPhotosPicked=function(arr){
+    var i;
+    if(!arr||!arr.length){return;}
+    for(i=0;i<arr.length;i++){shrink(arr[i],1600,function(){});}
+  };
+  window.androidBack=function(){
+    if($('form-modal').className.indexOf('show')>-1){closeForm();return true;}
+    if($('del-modal').className.indexOf('show')>-1){closeDel();return true;}
+    if($('guide-modal').className.indexOf('show')>-1){closeGuide();return true;}
+    return false;
+  };
+
+  function init(){
+    pins=load();
+    $('btn-add').addEventListener('click',function(){openForm(null);});
+    $('btn-guide').addEventListener('click',openGuide);
+    $('f-x').addEventListener('click',closeForm);
+    $('f-cancel').addEventListener('click',closeForm);
+    $('f-save').addEventListener('click',saveForm);
+    $('d-cancel').addEventListener('click',closeDel);
+    $('d-ok').addEventListener('click',function(){
+      pins=pins.filter(function(x){return String(x.id)!==String(delId);});
+      save();closeDel();toast('Pintasan dihapus');
+    });
+    $('g-x').addEventListener('click',closeGuide);
+    $('g-close').addEventListener('click',closeGuide);
+    $('g-try').addEventListener('click',function(){closeGuide();openForm(null);});
+    $('form-modal').addEventListener('click',function(e){if(e.target===this){closeForm();}});
+    $('del-modal').addEventListener('click',function(e){if(e.target===this){closeDel();}});
+    $('guide-modal').addEventListener('click',function(e){if(e.target===this){closeGuide();}});
+    $('swatches').addEventListener('click',function(e){
+      var t=e.target;
+      if(t&&t.getAttribute&&t.getAttribute('data-c')){editCat=t.getAttribute('data-c');swatches();}
+    });
+    $('chips').addEventListener('click',function(e){
+      var t=e.target;
+      if(t&&t.getAttribute&&t.getAttribute('data-f')){filter=t.getAttribute('data-f');render();}
+    });
+    $('search').addEventListener('input',function(){query=this.value;render();});
+    $('grid').addEventListener('click',function(e){
+      var el=actOf(e.target),act,p;
+      if(!el){return;}
+      act=el.getAttribute('data-act');p=find(el.getAttribute('data-id'));
+      if(!p){return;}
+      if(act==='chat'){openChat(p.phone);}
+      else if(act==='copy'){copyText(p.phone);}
+      else if(act==='edit'){openForm(p.id);}
+      else if(act==='del'){openDel(p.id);}
+    });
+    document.addEventListener('contextmenu',function(e){
+      var t=e.target;
+      if(!t||(t.tagName!=='INPUT'&&t.tagName!=='TEXTAREA')){e.preventDefault();}
+    });
+    window.addEventListener('resize',checkKeyboard);
+    render();
+    var s=$('splash');
+    if(s&&s.parentNode){s.parentNode.removeChild(s);}
+  }
+
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}
+  else{init();}
+})();
+</script>
+</body>
+</html>
